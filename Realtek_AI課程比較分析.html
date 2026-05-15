@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Realtek 2026 AI 外部課程分析平台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F7F6F3;--surface:#FFFFFF;--surface2:#F0EEE9;
+  --border:#E2DDD5;--border2:#CCC9BF;
+  --text:#1A1916;--text2:#5C5A54;--text3:#9C9A94;
+  --accent:#1C3557;--accent2:#2A4F80;--accent-lt:#E8EEF6;
+  --green:#1B6B2E;--green-lt:#EAF5EC;
+  --red:#8B0000;--red-lt:#FFF5F5;
+  --amber:#7A4F00;--amber-lt:#FFF8E6;
+  --purple:#4A1080;--purple-lt:#F5EAFF;
+  --gray:#37474F;--gray-lt:#ECEFF1;
+  --radius:8px;--radius-lg:14px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04);
+}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Layout */
+.app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+.sidebar{background:var(--accent);color:#fff;padding:0;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.sidebar-header{padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,.12)}
+.sidebar-logo{font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:4px}
+.sidebar-title{font-size:16px;font-weight:700;color:#fff;line-height:1.3}
+.sidebar-nav{padding:12px 10px;flex:1}
+.nav-section{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);padding:8px 8px 4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--radius);cursor:pointer;color:rgba(255,255,255,.75);font-size:13px;transition:all .15s;margin-bottom:2px;border:none;background:none;width:100%;text-align:left}
+.nav-item:hover{background:rgba(255,255,255,.1);color:#fff}
+.nav-item.active{background:rgba(255,255,255,.18);color:#fff;font-weight:500}
+.nav-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sidebar-footer{padding:14px;border-top:1px solid rgba(255,255,255,.12);font-size:11px;color:rgba(255,255,255,.4)}
+.main{padding:0;overflow-x:hidden}
+.page{display:none;animation:fadeIn .2s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* Top bar */
+.topbar{padding:18px 28px 14px;border-bottom:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.topbar-title{font-size:18px;font-weight:700;color:var(--text)}
+.topbar-sub{font-size:12px;color:var(--text3);margin-top:1px}
+.topbar-actions{display:flex;gap:8px}
+.btn{padding:7px 14px;border-radius:var(--radius);font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text2);transition:all .15s;display:inline-flex;align-items:center;gap:5px}
+.btn:hover{background:var(--surface2);border-color:var(--border2)}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{background:var(--accent2)}
+.btn-sm{padding:5px 10px;font-size:11px}
+
+/* Content */
+.content{padding:24px 28px}
+
+/* Stats row */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px}
+.stat-label{font-size:11px;color:var(--text3);font-weight:500;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px}
+.stat-value{font-size:26px;font-weight:700;line-height:1;color:var(--text)}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:4px}
+.stat-badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600;margin-top:6px}
+
+/* Section */
+.section-title{font-size:13px;font-weight:700;color:var(--text2);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.section-title::before{content:'';width:3px;height:14px;background:var(--accent);border-radius:2px;display:block}
+
+/* Filters */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;align-items:center}
+.filter-label{font-size:12px;color:var(--text3);font-weight:500}
+.chip{padding:5px 11px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text2);transition:all .12s;white-space:nowrap}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.search-box{padding:7px 12px;border-radius:var(--radius);border:1px solid var(--border);font-size:13px;background:var(--surface);color:var(--text);width:200px;outline:none;font-family:inherit}
+.search-box:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-lt)}
+select.filter-select{padding:7px 10px;border-radius:var(--radius);border:1px solid var(--border);font-size:12px;background:var(--surface);color:var(--text);outline:none;cursor:pointer;font-family:inherit}
+select.filter-select:focus{border-color:var(--accent)}
+
+/* Course table */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+thead th{background:var(--surface2);padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);text-align:left;border-bottom:1px solid var(--border)}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--surface2)}
+td{padding:10px 12px;font-size:12px;color:var(--text);vertical-align:top}
+td.inst-col{font-weight:600;font-size:11px}
+td.name-col{font-weight:500;line-height:1.4}
+td.outline-col{font-size:11px;color:var(--text2);line-height:1.5}
+.tag{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap;margin:1px}
+.tag-star{background:var(--green-lt);color:var(--green)}
+.tag-ext{background:var(--gray-lt);color:var(--gray)}
+.cat-tag{padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;display:inline-block;margin:1px}
+.link-btn{font-size:11px;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:3px}
+.link-btn:hover{text-decoration:underline}
+.count-badge{background:var(--accent-lt);color:var(--accent);padding:1px 6px;border-radius:20px;font-size:10px;font-weight:700;margin-left:4px}
+.no-results{text-align:center;padding:40px;color:var(--text3);font-size:13px}
+
+/* Institution cards */
+.inst-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-bottom:28px}
+.inst-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;cursor:pointer;transition:all .15s;position:relative}
+.inst-card:hover{border-color:var(--border2);box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.inst-card.internal-only{opacity:.65}
+.inst-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.inst-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0}
+.inst-meta{flex:1;padding-left:10px}
+.inst-name{font-size:14px;font-weight:700;color:var(--text);line-height:1.3}
+.inst-en{font-size:11px;color:var(--text3);margin-top:1px}
+.inst-type-badge{font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;margin-top:6px;display:inline-block}
+.inst-type-star{background:var(--green-lt);color:var(--green)}
+.inst-type-ext{background:var(--gray-lt);color:var(--gray)}
+.inst-desc{font-size:12px;color:var(--text2);line-height:1.6;margin:10px 0;border-top:1px solid var(--border);padding-top:10px}
+.inst-stats{display:flex;gap:12px;margin-top:10px}
+.inst-stat{text-align:center}
+.inst-stat-n{font-size:18px;font-weight:700;color:var(--accent)}
+.inst-stat-l{font-size:10px;color:var(--text3)}
+.inst-url{margin-top:10px;font-size:11px}
+.inst-cats{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+
+/* Matrix */
+.matrix-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:auto}
+.matrix-table{width:100%;border-collapse:collapse}
+.matrix-table th{background:var(--surface2);padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);text-align:center;border:1px solid var(--border);position:sticky;top:0}
+.matrix-table th.row-head{text-align:left;position:sticky;left:0;z-index:2;background:var(--surface2);min-width:180px}
+.matrix-table td{border:1px solid var(--border);padding:8px 10px;text-align:center;font-size:11px;vertical-align:middle}
+.matrix-table td.row-head{text-align:left;background:var(--surface);position:sticky;left:0;font-weight:500;font-size:12px;min-width:180px}
+.matrix-cell-count{font-size:16px;font-weight:700;color:var(--accent)}
+.matrix-cell-zero{color:var(--border2);font-size:12px}
+.matrix-cell-names{font-size:10px;color:var(--text3);line-height:1.4;margin-top:3px}
+.matrix-row-alt{background:var(--surface2)}
+.matrix-row-alt td.row-head{background:var(--surface2)}
+
+/* Edit modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius-lg);width:660px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.18);display:flex;flex-direction:column}
+.modal-header{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1}
+.modal-title{font-size:15px;font-weight:700}
+.modal-close{background:none;border:none;cursor:pointer;font-size:20px;color:var(--text3);line-height:1;padding:2px 6px;border-radius:4px}
+.modal-close:hover{background:var(--surface2);color:var(--text)}
+.modal-body{padding:18px 20px;flex:1}
+.form-row{margin-bottom:14px}
+.form-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:5px;display:block}
+.form-input{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;background:var(--surface);color:var(--text);font-family:inherit;outline:none}
+.form-input:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-lt)}
+textarea.form-input{resize:vertical;min-height:70px;line-height:1.5}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;position:sticky;bottom:0;background:var(--surface)}
+.form-hint{font-size:10px;color:var(--text3);margin-top:4px}
+
+/* Chart */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px}
+.chart-title{font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.bar-label{font-size:11px;color:var(--text2);width:120px;flex-shrink:0;text-overflow:ellipsis;overflow:hidden;white-space:nowrap}
+.bar-track{flex:1;height:10px;background:var(--surface2);border-radius:5px;overflow:hidden}
+.bar-fill{height:100%;border-radius:5px;transition:width .4s ease}
+.bar-val{font-size:11px;font-weight:700;color:var(--text);min-width:24px;text-align:right}
+.pie-legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* Highlight pulse */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.updating{animation:pulse .8s ease 2}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">Realtek 研發創新學院</div>
+    <div class="sidebar-title">AI 課程分析平台</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">主要功能</div>
+    <button class="nav-item active" onclick="showPage('dashboard')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      總覽儀表板
+    </button>
+    <button class="nav-item" onclick="showPage('courses')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      課程清單 &amp; 比較
+    </button>
+    <button class="nav-item" onclick="showPage('institutions')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      機構介紹
+    </button>
+    <button class="nav-item" onclick="showPage('matrix')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+      補足分析矩陣
+    </button>
+    <div class="nav-section" style="margin-top:12px">管理</div>
+    <button class="nav-item" onclick="showPage('edit')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      更新課程來源
+    </button>
+  </nav>
+  <div class="sidebar-footer">2026 年度 · 資料最後更新<br><span id="last-update">2025/05/15</span></div>
+</aside>
+
+<main class="main">
+<!-- Dashboard -->
+<div class="page active" id="page-dashboard">
+  <div class="topbar">
+    <div><div class="topbar-title">總覽儀表板</div><div class="topbar-sub">Realtek 8 大類別 × 8 機構外部課程資源</div></div>
+    <div class="topbar-actions">
+      <button class="btn btn-sm" onclick="showPage('edit')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        更新課程
+      </button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="stats-row" id="stats-row"></div>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <div class="chart-title">各機構課程數量</div>
+        <div id="chart-inst"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">各類別課程分佈</div>
+        <div id="chart-cat"></div>
+      </div>
+    </div>
+    <div class="section-title">8 大類別覆蓋狀況</div>
+    <div id="cat-overview"></div>
+  </div>
+</div>
+
+<!-- Courses -->
+<div class="page" id="page-courses">
+  <div class="topbar">
+    <div><div class="topbar-title">課程清單 &amp; 比較</div><div class="topbar-sub" id="course-count-bar">共 0 門課程</div></div>
+    <div class="topbar-actions">
+      <button class="btn btn-sm" onclick="openAddModal()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        新增課程
+      </button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="filters">
+      <span class="filter-label">機構：</span>
+      <div id="inst-chips"></div>
+      <span class="filter-label" style="margin-left:8px">類別：</span>
+      <select class="filter-select" id="cat-select" onchange="renderTable()">
+        <option value="">全部類別</option>
+      </select>
+      <span class="filter-label" style="margin-left:8px">性質：</span>
+      <select class="filter-select" id="type-select" onchange="renderTable()">
+        <option value="">全部</option>
+        <option value="star">★ 可企業內訓</option>
+        <option value="ext">僅限外訓</option>
+      </select>
+      <input class="search-box" id="search-box" placeholder="搜尋課程名稱…" oninput="renderTable()">
+    </div>
+    <div class="table-wrap">
+      <table>
+        <colgroup>
+          <col style="width:100px"><col style="width:80px"><col style="width:220px"><col style="width:90px"><col style="width:80px"><col style="width:80px"><col style="width:160px"><col style="width:100px">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>機構</th><th>代號</th><th>課程名稱</th><th>類別</th><th>時數</th><th>費用</th><th>課程大綱（摘要）</th><th>連結 / 操作</th>
+          </tr>
+        </thead>
+        <tbody id="course-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Institutions -->
+<div class="page" id="page-institutions">
+  <div class="topbar">
+    <div><div class="topbar-title">機構介紹</div><div class="topbar-sub">8 個外部課程合作機構詳細說明</div></div>
+  </div>
+  <div class="content">
+    <div class="section-title">★ 可安排企業內訓（6 機構）</div>
+    <div class="inst-grid" id="inst-grid-star"></div>
+    <div class="section-title" style="margin-top:24px">外訓為主（2 機構）</div>
+    <div class="inst-grid" id="inst-grid-ext"></div>
+  </div>
+</div>
+
+<!-- Matrix -->
+<div class="page" id="page-matrix">
+  <div class="topbar">
+    <div><div class="topbar-title">補足分析矩陣</div><div class="topbar-sub">8 大技術類別 × 8 機構課程數量對照</div></div>
+  </div>
+  <div class="content">
+    <div class="filters" style="margin-bottom:14px">
+      <span class="filter-label">顯示：</span>
+      <button class="chip active" id="matrix-chip-count" onclick="setMatrixMode('count')">課程數量</button>
+      <button class="chip" id="matrix-chip-names" onclick="setMatrixMode('names')">課程清單</button>
+    </div>
+    <div class="matrix-wrap"><table class="matrix-table" id="matrix-table"></table></div>
+    <div style="margin-top:16px;padding:12px 14px;background:var(--amber-lt);border-radius:var(--radius);border:1px solid #E8C86A;font-size:11px;color:var(--amber)">
+      ❌ Layout（01）與 Analog（05）：8 機構均無對應課程。建議洽詢 Synopsys（DSO.ai）或 Cadence（Cerebrus）EDA 廠商，以及台大劉深淵教授課程。
+    </div>
+  </div>
+</div>
+
+<!-- Edit -->
+<div class="page" id="page-edit">
+  <div class="topbar">
+    <div><div class="topbar-title">更新課程來源</div><div class="topbar-sub">管理機構資料與課程清單，新增 / 編輯 / 刪除</div></div>
+    <div class="topbar-actions">
+      <button class="btn btn-sm" onclick="exportData()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        匯出 JSON
+      </button>
+      <button class="btn btn-sm" onclick="document.getElementById('import-file').click()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        匯入 JSON
+      </button>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+      <button class="btn btn-sm btn-primary" onclick="openAddModal()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        新增課程
+      </button>
+    </div>
+  </div>
+  <div class="content">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px">
+        <div class="section-title">課程資料說明</div>
+        <p style="font-size:12px;color:var(--text2);line-height:1.7;margin-top:8px">
+          所有課程資料儲存在瀏覽器本機（localStorage）。<br>
+          <strong>匯出 JSON</strong>：下載目前所有課程資料備份。<br>
+          <strong>匯入 JSON</strong>：從備份檔案還原或批量更新課程資料。<br>
+          <strong>新增課程</strong>：逐筆填寫新課程資訊。<br>
+          點擊表格中的<strong>「編輯」</strong>可修改現有課程，<strong>「刪除」</strong>可移除。
+        </p>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px">
+        <div class="section-title">機構連結更新</div>
+        <div id="inst-url-edit" style="margin-top:8px"></div>
+      </div>
+    </div>
+    <div class="section-title">目前課程資料（點擊編輯 / 刪除）</div>
+    <div class="table-wrap">
+      <table>
+        <colgroup>
+          <col style="width:100px"><col style="width:80px"><col style="width:200px"><col style="width:80px"><col style="width:80px"><col style="width:80px"><col style="width:120px"><col style="width:100px">
+        </colgroup>
+        <thead>
+          <tr><th>機構</th><th>代號</th><th>課程名稱</th><th>類別</th><th>時數</th><th>費用</th><th>課程 URL</th><th>操作</th></tr>
+        </thead>
+        <tbody id="edit-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</main>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalIfOverlay(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">新增課程</span>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-idx">
+      <div class="form-row-2">
+        <div class="form-row">
+          <label class="form-label">機構</label>
+          <select class="form-input" id="f-inst"></select>
+        </div>
+        <div class="form-row">
+          <label class="form-label">課程代號</label>
+          <input class="form-input" id="f-code" placeholder="如 III-SD01">
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">課程名稱</label>
+        <input class="form-input" id="f-name" placeholder="完整課程名稱">
+      </div>
+      <div class="form-row-2">
+        <div class="form-row">
+          <label class="form-label">Realtek 類別</label>
+          <select class="form-input" id="f-cat"></select>
+        </div>
+        <div class="form-row">
+          <label class="form-label">性質</label>
+          <select class="form-input" id="f-type">
+            <option value="star">★ 可企業內訓</option>
+            <option value="ext">僅限外訓</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-row">
+          <label class="form-label">時數</label>
+          <input class="form-input" id="f-hours" placeholder="如 21小時（3天）">
+        </div>
+        <div class="form-row">
+          <label class="form-label">費用</label>
+          <input class="form-input" id="f-fee" placeholder="如 請洽課程報名">
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">適合對象</label>
+        <input class="form-input" id="f-target" placeholder="如 Python工程師/ML工程師">
+      </div>
+      <div class="form-row">
+        <label class="form-label">課程大綱摘要</label>
+        <textarea class="form-input" id="f-outline" placeholder="重點技術內容、模組說明…"></textarea>
+      </div>
+      <div class="form-row">
+        <label class="form-label">課程連結 URL</label>
+        <input class="form-input" id="f-url" placeholder="https://...">
+        <div class="form-hint">若課程無固定頁面，填機構首頁或查詢入口</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveCourse()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CATEGORIES = [
+  {id:'01',short:'Layout',full:'Layout and Physical Design（實體設計與佈局）',color:'#BF4F00',bg:'#FFF0E6'},
+  {id:'02',short:'SD-S',full:'System Design Software（系統設計軟體）',color:'#1B6B2E',bg:'#EAF5EC'},
+  {id:'03',short:'DD',full:'Digital Design（數位設計）',color:'#4A1080',bg:'#F5EAFF'},
+  {id:'04',short:'General',full:'General / All（通用類）',color:'#0D47A1',bg:'#E3F0FF'},
+  {id:'05',short:'Analog',full:'Analog Design（類比設計）',color:'#AD1457',bg:'#FDE8F0'},
+  {id:'06',short:'DV',full:'Digital Verification（數位驗證）',color:'#B71C1C',bg:'#FFECEC'},
+  {id:'07',short:'SD-H',full:'System Design Hardware（系統設計硬體）',color:'#E65100',bg:'#FFF3E6'},
+  {id:'08',short:'DTD',full:'Digital Technology Development（數位技術設計）',color:'#37474F',bg:'#ECEFF1'},
+];
+
+const INST_DATA = [
+  {id:'TCFST',name:'自強工業科學基金會',en:'TCFST',icon:'自強',iconBg:'#1B6B2E',type:'star',
+   desc:'工研院主辦，前瞻技術課程為主，學術與產業兼顧。課程涵蓋 SD-S、DD、General、SD-H、DTD，難度多元，含研究所等級進階課程。可安排企業包班。',
+   url:'https://edu.tcfst.org.tw',courses:{}},
+  {id:'TAICA',name:'臺灣大專院校人工智慧學程聯盟',en:'TAICA',icon:'AI',iconBg:'#7B2D8B',type:'star',
+   desc:'教育部支持，聯合台大、交大、成大等頂尖大學開設產業AI學程。課程由教授授課，學術深度高，部分課程難度★×8～10。可安排企業包班。',
+   url:'https://taicatw.net',courses:{}},
+  {id:'UUU',name:'恆逸教育訓練',en:'UUU / Unisoft',icon:'恆逸',iconBg:'#8B2252',type:'star',
+   desc:'全台最多課程數量，涵蓋 AWS/GCP/Azure 三大雲端 AI 服務，以及 Claude Code、GitHub Copilot、DIFY 等最新 GenAI 工具。42 門篩選後課程，企業包班服務成熟。',
+   url:'https://uuu.com.tw',courses:{}},
+  {id:'PCSchool',name:'巨匠電腦',en:'PCSchool / 巨匠企業服務',icon:'巨匠',iconBg:'#8B0000',type:'star',
+   desc:'全台最大電腦教育集團，巨匠企業服務網（biz.pcschool.tv）提供講師外派、企業包班、企業後台。課程著重 Python AI 開發實作與 Microsoft Azure AI 認證。可協助申請政府補助（最高12萬）。',
+   url:'https://business.gjunedu.com',courses:{}},
+  {id:'TibaMe',name:'緯育TibaMe',en:'TibaMe for Business',icon:'緯育',iconBg:'#006400',type:'star',
+   desc:'TibaMe for Business 提供企業完整AI培訓，包含實體包班、TibaMe 2.0 企業學習平台（統一派課/進度追蹤）、NVIDIA DLI 官方授權認證課程。合作案例：寒舍集團、遠傳電信。',
+   url:'https://business.tibame.com',courses:{}},
+  {id:'III',name:'資訊工業策進會',en:'III / 資策會數位教育研究所',icon:'資策',iconBg:'#1A3A6B',type:'star',
+   desc:'財團法人政府法人背景，課程教育部認可。擁有「生成式AI能力認證」國家級認證（NT$1,300，效期2年），可登錄公務人員終身學習護照。企業客製內訓（講師外派/包班）。',
+   url:'https://www.iiiedu.org.tw',courses:{}},
+  {id:'WDA',name:'勞動力發展署',en:'WDA 產業人才投資方案',icon:'WDA',iconBg:'#37474F',type:'ext',
+   desc:'政府補助在職勞工80%學費（特定身分100%免費）。依法規課程須至指定場地參訓，不得辦企業內訓。課程動態開班，至職業訓練整合網查詢：course.taiwanjobs.gov.tw',
+   url:'https://course.taiwanjobs.gov.tw/course/search-training',courses:{}},
+  {id:'AIA',name:'台灣人工智慧學校',en:'Taiwan AI Academy (AIA)',icon:'AIA',iconBg:'#1C3557',type:'ext',
+   desc:'財團法人，中研院協辦，台塑/聯發科/奇美等捐助。LLM 初/中/高階班、經理人班、產業AI專班等進階課程。以實體培訓為主，新竹設有 Meetup 活動社群。企業包班洽詢另有優惠。',
+   url:'https://aiacademy.tw',courses:{}},
+];
+
+const DEFAULT_COURSES = [
+  {inst:'TCFST',code:'TCF-SD01',name:'生成式AI技術應用與LLM工程實務',cat:'02',type:'star',hours:'21小時',fee:'請洽報名',target:'工程師/PM',outline:'LLM架構、Prompt Engineering、RAG系統建置、Agent應用設計、企業AI部署',url:'https://edu.tcfst.org.tw'},
+  {inst:'TCFST',code:'TCF-SD02',name:'生成式AI與ChatGPT企業應用工作坊',cat:'02',type:'star',hours:'7小時',fee:'請洽報名',target:'各職能員工',outline:'ChatGPT進階應用、Prompt設計策略、企業知識庫建立、自動化工作流',url:'https://edu.tcfst.org.tw'},
+  {inst:'TCFST',code:'TCF-DD01',name:'深度學習與電腦視覺實務班',cat:'03',type:'star',hours:'21小時',fee:'請洽報名',target:'AI/ML工程師',outline:'CNN/Transformer、物件偵測(YOLO)、語意分割、影像生成(GAN/Diffusion)、模型部署',url:'https://edu.tcfst.org.tw'},
+  {inst:'TCFST',code:'TCF-GN01',name:'人工智慧應用趨勢與策略論壇',cat:'04',type:'star',hours:'7小時',fee:'請洽報名',target:'主管/決策者',outline:'AI產業發展趨勢、各產業AI落地案例、AI倫理與治理、企業導入策略框架',url:'https://edu.tcfst.org.tw'},
+  {inst:'TAICA',code:'TAI-SD01',name:'生成式AI應用系統工程（NCKU）',cat:'02',type:'star',hours:'請洽學程',fee:'請洽招生',target:'工程師/研究生',outline:'LLM系統架構、RAG工程實作、Fine-tuning技術、多模態AI系統設計',url:'https://taicatw.net'},
+  {inst:'TAICA',code:'TAI-DD01',name:'深度學習 Deep Learning（NYCU）',cat:'03',type:'star',hours:'請洽學程',fee:'請洽招生',target:'AI/ML工程師（★×10難度）',outline:'深度學習理論基礎、CNN/RNN/Transformer、強化學習、前沿研究方向',url:'https://taicatw.net'},
+  {inst:'TAICA',code:'TAI-GN01',name:'⭐ AI倫理與法律（THU跨學程）',cat:'04',type:'star',hours:'請洽學程',fee:'請洽招生',target:'各職能員工/主管',outline:'AI倫理框架、歐盟AI法案、台灣AI治理、資料隱私、演算法偏見防治',url:'https://taicatw.net'},
+  {inst:'UUU',code:'UUU-SD01',name:'Claude Code + GitHub Copilot AI程式開發',cat:'02',type:'star',hours:'21小時',fee:'請洽報名',target:'工程師/開發者',outline:'Claude Code CLI操作、GitHub Copilot Agent模式、AI輔助開發最佳實務、Vibe Coding工作流',url:'https://uuu.com.tw'},
+  {inst:'UUU',code:'UUU-SD02',name:'AWS Bedrock 生成式AI應用開發',cat:'02',type:'star',hours:'21小時',fee:'請洽報名',target:'AWS工程師/後端工程師',outline:'Amazon Bedrock生態系、Claude on AWS實作、Knowledge Base建置、Agent for Bedrock',url:'https://uuu.com.tw'},
+  {inst:'UUU',code:'UUU-SD03',name:'GCP Vertex AI 大型語言模型應用',cat:'02',type:'star',hours:'21小時',fee:'請洽報名',target:'GCP工程師/ML工程師',outline:'Vertex AI平台、Gemini API應用、RAG on GCP、模型微調與部署',url:'https://uuu.com.tw'},
+  {inst:'UUU',code:'UUU-DD01',name:'AI電腦視覺應用開發實戰',cat:'03',type:'star',hours:'21小時',fee:'請洽報名',target:'軟硬體工程師',outline:'OpenCV、物件偵測YOLO系列、人臉辨識、工業視覺品檢、Edge部署',url:'https://uuu.com.tw'},
+  {inst:'UUU',code:'UUU-DV01',name:'AI資安：SecAI+ 認證培訓',cat:'06',type:'star',hours:'21小時',fee:'請洽報名',target:'資安工程師/IT管理者',outline:'AI系統資安威脅模型、對抗式攻擊防禦、AI安全評估、AI資安合規',url:'https://uuu.com.tw'},
+  {inst:'PCSchool',code:'PC-SD01',name:'★ Python AI應用與部署（LLM/RAG/LangChain）',cat:'02',type:'star',hours:'36小時（可客製）',fee:'請洽企業服務',target:'有Python基礎工程師',outline:'Transformer架構、LLM部署、RAG建置、LangChain/Agent整合、CI/CD自動化部署',url:'https://www.pcschool.com.tw/ai-programming/outline/a1300004'},
+  {inst:'PCSchool',code:'PC-SD02',name:'★ Microsoft Azure AI 應用實戰營（AI-103認證）',cat:'02',type:'star',hours:'36小時（可客製）',fee:'請洽企業服務',target:'.NET/Python工程師',outline:'Azure生成式AI應用、Azure AI Agent、自然語言解決方案、Microsoft Applied Skills認證',url:'https://www.pcschool.com.tw/ai-programming/outline/a1300005'},
+  {inst:'PCSchool',code:'PC-DD01',name:'★ Python影像辨識與智慧製造（OpenCV/YOLO）',cat:'03',type:'star',hours:'36小時（可客製）',fee:'請洽企業服務',target:'有Python基礎工程師',outline:'OpenCV影像處理、深度學習模型調優、YOLO物件偵測、影像分割、MediaPipe、模型部署',url:'https://www.pcschool.com.tw/ai-programming/outline/a1300003'},
+  {inst:'PCSchool',code:'PC-DD02',name:'★ Python商業分析決策（資料科學/機器學習）',cat:'03',type:'star',hours:'36小時（可客製）',fee:'請洽企業服務',target:'資料分析師/研發工程師',outline:'NumPy/Pandas/SQL、探索性資料分析(EDA)、統計分析、機器學習(回歸/分類/Pipeline)、資料視覺化',url:'https://www.pcschool.com.tw/ai-programming/outline/a1300002'},
+  {inst:'PCSchool',code:'PC-GN01',name:'★ 生成式AI職場應用進階班（企業客製版）',cat:'04',type:'star',hours:'依需求規劃',fee:'請洽企業服務',target:'各職能員工/主管',outline:'ChatGPT/Gemini/Copilot進階Prompt策略、AI輔助文件製作、Microsoft 365 Copilot企業整合',url:'https://business.gjunedu.com/Course/182?c=27'},
+  {inst:'TibaMe',code:'TB-SD01',name:'★ 生成式AI與LLM工程師培訓學程',cat:'02',type:'star',hours:'客製化（建議120H+）',fee:'請洽企業服務',target:'Python工程師/資料工程師',outline:'LLM應用架構、RAG系統建置(LlamaIndex/LangChain)、AI Agent開發、MLOps部署(Docker/K8s)',url:'https://business.tibame.com/'},
+  {inst:'TibaMe',code:'TB-SD02',name:'★ AI應用工程師養成班（政府補助班）',cat:'02',type:'star',hours:'300小時（16週）',fee:'政府補助80-100%',target:'AI轉職者/工程師',outline:'資料爬蟲/洗滌、機器學習、深度學習(CNN/RNN)、影像識別、資料視覺化、就業導向',url:'https://www.tibame.com/eventpage/ai-engineer-course-taipei'},
+  {inst:'TibaMe',code:'TB-DD01',name:'★ Python深度學習實戰（真人直播）',cat:'03',type:'star',hours:'依班次',fee:'請洽企業服務',target:'ML/AI工程師',outline:'TensorFlow/PyTorch深度學習模型(CNN/RNN/LSTM/Transformer)、遷移學習、模型部署',url:'https://www.tibame.com/courselibrary/artificial-intelligence'},
+  {inst:'TibaMe',code:'TB-DD02',name:'★ NVIDIA DLI 官方認證課程',cat:'03',type:'star',hours:'依模組（半日起）',fee:'企業內訓官方報價',target:'工程師（需有ML基礎）',outline:'深度學習基礎、電腦視覺、NLP(BERT)、CUDA加速計算、Edge AI部署(Jetson)，完課獲NVIDIA認證',url:'https://business.tibame.com/'},
+  {inst:'TibaMe',code:'TB-GN01',name:'★ AI數位轉型企業培訓（主管客製課程）',cat:'04',type:'star',hours:'客製化（3H~多日）',fee:'請洽企業服務',target:'企業主管/HR/PM',outline:'AI工具應用與效能、部門AI導入策略、Copilot/ChatGPT企業整合、AI培訓計畫設計',url:'https://business.tibame.com/'},
+  {inst:'TibaMe',code:'TB-GN02',name:'★ AI資料科學家全方位學程',cat:'04',type:'star',hours:'18週（80H+）',fee:'請洽企業服務',target:'資料工程師/分析師',outline:'Python/ML/深度學習(TF/PyTorch)/影像辨識/NLP/資料視覺化，9項專案實作',url:'https://www.tibame.com/eventpage/ai_datascientist'},
+  {inst:'TibaMe',code:'TB-SH01',name:'★ AIoT/嵌入式AI/Edge AI 企業培訓',cat:'07',type:'star',hours:'客製化',fee:'請洽企業服務',target:'硬體/嵌入式工程師',outline:'IoT平台整合、邊緣AI部署(Raspberry Pi/Jetson)、Edge AI模型壓縮優化、AIoT系統架構',url:'https://business.tibame.com/'},
+  {inst:'III',code:'III-SD01',name:'★ 生成式AI與LLM應用開發實作班',cat:'02',type:'star',hours:'21小時（3天）',fee:'請洽課程報名',target:'Python工程師/AI開發人員',outline:'LLM架構比較、Prompt Engineering設計策略、RAG架構與向量知識庫、AI Agent(LangChain/LlamaIndex)、企業AI系統實作',url:'https://www.iiiedu.org.tw/courses/'},
+  {inst:'III',code:'III-SD02',name:'★ 生成式AI能力認證備考培訓班',cat:'02',type:'star',hours:'14小時（2天）',fee:'請洽課程報名',target:'各職能員工/工程師（備考官方認證）',outline:'生成式AI基礎知識、Prompt Engineering、RAG技術概念、AI倫理法規(EU AI Act)、認證重點解析與模擬試題',url:'https://www.iiiedu.org.tw/certifications/'},
+  {inst:'III',code:'III-SD03',name:'★ Python機器學習進階班',cat:'02',type:'star',hours:'21小時（3天）',fee:'請洽課程報名',target:'有Python基礎工程師/資料分析師',outline:'Scikit-Learn進階、特徵工程、SVM/Random Forest/XGBoost、模型評估(ROC/AUC)、Pipeline、模型部署',url:'https://www.iiiedu.org.tw/ML'},
+  {inst:'III',code:'III-DD01',name:'★ 深度學習與神經網路實務班',cat:'03',type:'star',hours:'21~30小時',fee:'請洽課程報名',target:'ML/AI工程師（有機器學習基礎）',outline:'CNN/RNN/LSTM/Transformer、TensorFlow/PyTorch、遷移學習、正則化/BatchNorm、ONNX/TensorRT部署',url:'https://www.iiiedu.org.tw/courses/'},
+  {inst:'III',code:'III-DD02',name:'★ 人工智慧深度強化學習實作班',cat:'03',type:'star',hours:'21小時（3天）',fee:'請洽課程報名',target:'AI研究人員/工程師（有DL基礎）',outline:'Q-Learning/Policy Gradient/PPO/Actor-Critic、AlphaGo/OpenAI Gym、智慧系統設計實作',url:'https://www.iiiedu.org.tw/REF'},
+  {inst:'III',code:'III-GN01',name:'★ 人工智慧經理人培訓班',cat:'04',type:'star',hours:'14小時（2天）',fee:'請洽課程報名',target:'企業主管/PM/決策者',outline:'AI技術全覽（ML/DL/LLM）、各領域AI落地案例、AI專案ROI評估、AI治理與倫理風險、AI導入計畫藍圖',url:'https://www.iiiedu.org.tw/aitech/'},
+  {inst:'III',code:'III-GN02',name:'★ 生成式AI能力認證（教育部認可國家認證）',cat:'04',type:'star',hours:'線上考試（90分鐘）',fee:'NT$1,300（含稅）',target:'各職能員工（無需程式背景）',outline:'生成式AI基礎/能力強化/應用技能/倫理法律 四大面向，效期2年，可登錄公務人員終身學習護照',url:'https://www.iiiedu.org.tw/certifications/'},
+  {inst:'III',code:'III-GN03',name:'★ AI人工智慧資安升級實作班',cat:'04',type:'star',hours:'14小時（2天）',fee:'請洽課程報名',target:'資安工程師/IT管理者',outline:'AI系統資安威脅模型、對抗式攻擊防禦、AI安全評估方法、隱私保護設計（聯邦學習/差分隱私）、合規框架',url:'https://www.iiiedu.org.tw/aiis/'},
+  {inst:'III',code:'III-DV01',name:'★ AI資訊安全實務（IoT/自動駕駛/智慧製造）',cat:'06',type:'star',hours:'14小時（2天）',fee:'請洽課程報名',target:'資安/DV驗證工程師',outline:'AI應用資安個案分析（IoT/自駕/工業機器人）、AI攻擊防禦策略、安全評估工具、因應措施實作演練',url:'https://www.iiiedu.org.tw/aiis/'},
+  {inst:'III',code:'III-SH01',name:'★ AIoT物聯網智慧創新應用就業養成班',cat:'07',type:'star',hours:'600小時（政府補助）',fee:'政府補助80-100%',target:'IoT/嵌入式工程師/AI轉職者',outline:'Raspberry Pi AIoT、Python/Java ML/OpenCV、Node.js/MongoDB IoT後端、TensorFlow、智慧應用專題、就業媒合',url:'https://www.iiiedu.org.tw/courses/'},
+  {inst:'III',code:'III-DT01',name:'★ AI人工智慧創新應用就業養成班',cat:'08',type:'star',hours:'300~600小時（政府補助）',fee:'政府補助80-100%',target:'AI轉職者（有程式基礎）',outline:'Python/資料分析/ML/DL(TensorFlow)/對話式AI/影像辨識/Web整合、期末專題、就業媒合',url:'https://www.iiiedu.org.tw/courses/jjaient2105/'},
+  {inst:'WDA',code:'WDA-SD01',name:'生成式AI與大型語言模型進階應用',cat:'02',type:'ext',hours:'21小時',fee:'個人負擔20%（補助80%）',target:'工程師/PM/各職能',outline:'LLM核心技術深化、Prompt Engineering進階、RAG架構實作、Fine-tuning概念、AI應用系統開發實戰',url:'https://course.taiwanjobs.gov.tw/course/search-training'},
+  {inst:'WDA',code:'WDA-SD02',name:'AI Agent 實務應用與自動化流程設計',cat:'02',type:'ext',hours:'21小時',fee:'個人負擔20%（補助80%）',target:'工程師/IT/MIS',outline:'AI Agent設計原理、LangChain/AutoGen框架、工作流自動化、RAG知識庫整合、企業AI助理實作',url:'https://course.taiwanjobs.gov.tw/course/search-training'},
+  {inst:'WDA',code:'WDA-SD03',name:'Python程式設計與AI應用開發進階班',cat:'02',type:'ext',hours:'30小時',fee:'個人負擔20%（補助80%）',target:'有Python基礎工程師',outline:'Python進階語法、NumPy/Pandas資料處理、API串接、OpenAI/Claude API整合、AI應用專案實戰',url:'https://course.taiwanjobs.gov.tw/course/search-training'},
+  {inst:'WDA',code:'WDA-DD01',name:'Python機器學習與深度學習實務班',cat:'03',type:'ext',hours:'30小時',fee:'個人負擔20%（補助80%）',target:'有Python基礎工程師',outline:'Scikit-Learn機器學習全流程、TensorFlow/Keras深度學習(CNN/RNN)、影像辨識、模型訓練/評估/部署',url:'https://course.taiwanjobs.gov.tw/course/search-training'},
+  {inst:'WDA',code:'WDA-DD02',name:'電腦視覺與影像辨識AI應用實作',cat:'03',type:'ext',hours:'21小時',fee:'個人負擔20%（補助80%）',target:'軟硬體工程師',outline:'OpenCV影像處理、物件偵測（YOLO/SSD）、人臉辨識、智慧製造視覺品檢、模型部署實作',url:'https://course.taiwanjobs.gov.tw/course/search-training'},
+  {inst:'WDA',code:'WDA-GN01',name:'AI數位素養與職場應用進階班',cat:'04',type:'ext',hours:'18小時',fee:'個人負擔20%（補助80%）',target:'各職能在職員工',outline:'ChatGPT/Gemini/Claude進階應用與Prompt Engineering、AI輔助文件撰寫、職場AI工具整合',url:'https://course.taiwanjobs.gov.tw/course/search-training'},
+  {inst:'WDA',code:'WDA-GN02',name:'企業AI轉型與智慧營運實務',cat:'04',type:'ext',hours:'18小時',fee:'個人負擔20%（補助80%）',target:'企業主管/PM/HR',outline:'AI轉型策略規劃、AI工具選型評估、智慧客服AI應用、AI導入ROI評估、數位轉型案例分析',url:'https://course.taiwanjobs.gov.tw/course/search-training'},
+  {inst:'WDA',code:'WDA-DT01',name:'AI智慧製造與品質管理實務',cat:'08',type:'ext',hours:'21小時',fee:'個人負擔20%（補助80%）',target:'製造/品質/IE工程師',outline:'AI於製造業應用（預測維護/品質檢測/生產排程優化）、工業數據分析技術、智慧工廠架構設計',url:'https://course.taiwanjobs.gov.tw/course/search-training'},
+  {inst:'AIA',code:'AIA-SD01',name:'大型語言模型實作初階班（LLM/自動化流程/RAG入門）',cat:'02',type:'ext',hours:'21小時（3天）實體',fee:'NT$17,000',target:'有興趣的上班族/IT新手（無需程式背景）',outline:'LLM基礎知識與ChatGPT提問技術、Make自動化流程應用、聊天機器人建立、多模態語言模型應用',url:'https://aiacademy.tw/admission-llma-tp/'},
+  {inst:'AIA',code:'AIA-SD02',name:'大型語言模型實作中階班（RAG/Fine-tuning）',cat:'02',type:'ext',hours:'請洽招生簡章',fee:'請洽招生簡章',target:'有LLM基礎的工程師/資料科學家',outline:'RAG實作與向量資料庫建置、Fine-tuning技術實作、企業級聊天機器人開發、LLM架構深度解析',url:'https://aiacademy.tw/admission-llmc-tp/'},
+  {inst:'AIA',code:'AIA-SD03',name:'大型語言模型實作高階班（Agent/生產環境部署）',cat:'02',type:'ext',hours:'請洽招生簡章',fee:'請洽招生簡章',target:'Python工程師/ML工程師（需有LLM基礎）',outline:'AI Agent設計與Multi-Agent協作、地端RAG、LLM Fine-tuning(LoRA/SFT)、生產環境部署與優化',url:'https://aiacademy.tw/admission-llmb-tp/'},
+  {inst:'AIA',code:'AIA-SD04',name:'NLP 專題實作班（自然語言處理/深度學習應用）',cat:'02',type:'ext',hours:'請洽招生簡章',fee:'請洽招生簡章',target:'有Python/ML基礎的工程師',outline:'NLP核心技術（文字分類/情感分析/NER）、Transformer/BERT/GPT應用、RAG與向量搜尋整合',url:'https://aiacademy.tw/admission-tech-nlp-tw/'},
+  {inst:'AIA',code:'AIA-DD01',name:'Edge AI 班（邊緣運算AI/嵌入式模型部署）',cat:'03',type:'ext',hours:'請洽招生簡章',fee:'請洽招生簡章',target:'硬體/嵌入式工程師（有Python基礎）',outline:'Edge AI部署架構設計、模型壓縮量化技術（Pruning/Quantization/KD）、Jetson/Raspberry Pi部署',url:'https://aiacademy.tw/admission-edge-ai/'},
+  {inst:'AIA',code:'AIA-DD02',name:'技術領袖班（ML/DL進階/AI系統架構）',cat:'03',type:'ext',hours:'請洽招生簡章',fee:'請洽招生簡章',target:'資深AI/ML工程師、研究人員（需有DL基礎）',outline:'ML/DL前沿技術深化、AI系統架構設計、大規模模型訓練、業界AI專案Case Study',url:'https://aiacademy.tw/admission-tech-tw/'},
+  {inst:'AIA',code:'AIA-GN01',name:'GenAI 素養認證實作班（含AIATCL™認證）',cat:'04',type:'ext',hours:'45.5小時（7天）實體',fee:'NT$45,000（校友NT$40,000）',target:'企業管理者/行銷/客服/AI初學者',outline:'生成式AI素養培育（LLM/圖像/音樂生成）、ChatGPT Prompt技術、Make自動化流程、GenAI創新競賽；可獲AIA人才認證AIATCL™',url:'https://aiacademy.tw/admission-genai7-tp/'},
+  {inst:'AIA',code:'AIA-GN02',name:'經理人班（AI策略/數位轉型/高管決策）',cat:'04',type:'ext',hours:'請洽招生簡章',fee:'請洽招生簡章',target:'企業主管/CXO/數位長（CDO）',outline:'AI策略規劃與數位轉型路徑、AI技術全覽與業務場景對應、AI投資ROI評估、AI治理與倫理風險管理',url:'https://aiacademy.tw/admission-manager-tp/'},
+  {inst:'AIA',code:'AIA-GN03',name:'經理人 AIPM 班（AI專案管理）',cat:'04',type:'ext',hours:'請洽招生簡章',fee:'請洽招生簡章',target:'企業主管/PM/產品負責人（有AI基礎）',outline:'AI專案規劃與推進方法論、AI需求分析、AI開發流程管理、跨部門協作模式、AI專案風險管理',url:'https://aiacademy.tw/admission-aipm-tp2/'},
+  {inst:'AIA',code:'AIA-DT01',name:'產業 AI 專班（製造業/半導體/ICT應用）',cat:'08',type:'ext',hours:'請洽招生簡章',fee:'請洽招生簡章',target:'製造/半導體/ICT研發工程師',outline:'AI應用於製造業全流程（預測維護/品檢/產能優化）、半導體製程AI應用、工業數據分析、智慧工廠架構',url:'https://aiacademy.tw/admission-manufacturing-tp/'},
+];
+
+let courses = [];
+let matrixMode = 'count';
+let activeInsts = new Set();
+let editingIdx = -1;
+
+function loadData(){
+  const saved = localStorage.getItem('rtk-courses');
+  courses = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DEFAULT_COURSES));
+}
+function saveData(){ localStorage.setItem('rtk-courses',JSON.stringify(courses)); localStorage.setItem('rtk-lastupdate',new Date().toLocaleDateString('zh-TW')); renderAll(); }
+function getInst(id){ return INST_DATA.find(i=>i.id===id)||{name:id,iconBg:'#888',type:'star'}; }
+function getCat(id){ return CATEGORIES.find(c=>c.id===id)||{short:id,color:'#888',bg:'#eee'}; }
+
+function renderAll(){
+  const d = localStorage.getItem('rtk-lastupdate');
+  if(d) document.getElementById('last-update').textContent=d;
+  renderDashboard(); renderTable(); renderInst(); renderMatrix(); renderEditTable(); renderInstUrlEdit();
+}
+
+function renderDashboard(){
+  const total = courses.length;
+  const starCount = courses.filter(c=>c.type==='star').length;
+  const instSet = new Set(courses.map(c=>c.inst));
+  const catSet = new Set(courses.filter(c=>!['01','05'].includes(c.cat)).map(c=>c.cat));
+  document.getElementById('stats-row').innerHTML=`
+    <div class="stat-card"><div class="stat-label">總課程數</div><div class="stat-value">${total}</div><div class="stat-sub">共 ${instSet.size} 機構</div></div>
+    <div class="stat-card"><div class="stat-label">★ 可企業內訓</div><div class="stat-value" style="color:var(--green)">${starCount}</div><div class="stat-sub">6 機構可包班</div></div>
+    <div class="stat-card"><div class="stat-label">外訓課程</div><div class="stat-value" style="color:var(--gray)">${total-starCount}</div><div class="stat-sub">WDA + AIA</div></div>
+    <div class="stat-card"><div class="stat-label">類別覆蓋</div><div class="stat-value" style="color:var(--amber)">${catSet.size}<span style="font-size:14px;font-weight:400;color:var(--text3)">/8</span></div><div class="stat-sub">Layout/Analog 尚無</div></div>`;
+
+  const instCounts = INST_DATA.map(i=>({name:i.name.length>6?i.id:i.name,n:courses.filter(c=>c.inst===i.id).length,type:i.type}));
+  const maxI = Math.max(...instCounts.map(i=>i.n),1);
+  document.getElementById('chart-inst').innerHTML=instCounts.map(i=>`
+    <div class="bar-row"><div class="bar-label">${i.name}</div>
+    <div class="bar-track"><div class="bar-fill" style="width:${Math.round(i.n/maxI*100)}%;background:${i.type==='star'?'var(--green)':'var(--gray)'}"></div></div>
+    <div class="bar-val">${i.n}</div></div>`).join('');
+
+  const catCounts = CATEGORIES.map(c=>({...c,n:courses.filter(x=>x.cat===c.id).length}));
+  const maxC = Math.max(...catCounts.map(c=>c.n),1);
+  document.getElementById('chart-cat').innerHTML=catCounts.map(c=>`
+    <div class="bar-row"><div class="bar-label">${c.id} ${c.short}</div>
+    <div class="bar-track"><div class="bar-fill" style="width:${Math.round(c.n/maxC*100)}%;background:${c.color}"></div></div>
+    <div class="bar-val">${c.n}</div></div>`).join('');
+
+  document.getElementById('cat-overview').innerHTML=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+    ${CATEGORIES.map(c=>{
+      const n=courses.filter(x=>x.cat===c.id).length;
+      const insts=[...new Set(courses.filter(x=>x.cat===c.id).map(x=>x.inst))];
+      const status=c.id==='01'||c.id==='05'?'❌':'✅';
+      return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;border-top:3px solid ${c.color}">
+        <div style="font-size:10px;font-weight:700;color:${c.color};letter-spacing:.06em;text-transform:uppercase">${c.id} ${c.short}</div>
+        <div style="font-size:20px;font-weight:700;margin:4px 0;color:var(--text)">${status} ${n}</div>
+        <div style="font-size:10px;color:var(--text3);line-height:1.5">${n===0?'尚無外部機構課程':insts.map(i=>getInst(i).id).join(' / ')}</div>
+      </div>`;
+    }).join('')}</div>`;
+}
+
+function buildInstChips(){
+  activeInsts = new Set(INST_DATA.map(i=>i.id));
+  const wrap = document.getElementById('inst-chips');
+  wrap.innerHTML = `<button class="chip active" onclick="toggleInst('ALL',this)">全部</button>` +
+    INST_DATA.map(i=>`<button class="chip active" onclick="toggleInst('${i.id}',this)">${i.id}<span class="count-badge">${courses.filter(c=>c.inst===i.id).length}</span></button>`).join('');
+}
+function toggleInst(id,el){
+  if(id==='ALL'){activeInsts=new Set(INST_DATA.map(i=>i.id));document.querySelectorAll('#inst-chips .chip').forEach(c=>c.classList.add('active'));}
+  else{
+    el.classList.toggle('active');
+    if(el.classList.contains('active')) activeInsts.add(id); else activeInsts.delete(id);
+    const allChip=document.querySelector('#inst-chips .chip:first-child');
+    if(activeInsts.size===INST_DATA.length) allChip.classList.add('active'); else allChip.classList.remove('active');
+  }
+  renderTable();
+}
+function renderTable(){
+  const cat=document.getElementById('cat-select').value;
+  const type=document.getElementById('type-select').value;
+  const q=(document.getElementById('search-box').value||'').toLowerCase();
+  const filtered=courses.filter(c=>
+    activeInsts.has(c.inst)&&
+    (!cat||c.cat===cat)&&
+    (!type||c.type===type)&&
+    (!q||c.name.toLowerCase().includes(q)||c.code.toLowerCase().includes(q)||(c.outline||'').toLowerCase().includes(q))
+  );
+  document.getElementById('course-count-bar').textContent=`共 ${filtered.length} 門課程（全部 ${courses.length} 門）`;
+  const tbody=document.getElementById('course-tbody');
+  if(!filtered.length){tbody.innerHTML=`<tr><td colspan="8" class="no-results">無符合條件的課程</td></tr>`;return;}
+  const inst=getInst;const cat2=getCat;
+  tbody.innerHTML=filtered.map((c,i)=>{
+    const I=inst(c.inst);const C=cat2(c.cat);const ci=courses.indexOf(c);
+    return `<tr>
+      <td class="inst-col" style="color:${I.iconBg}">${I.id}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">${c.code}</td>
+      <td class="name-col"><div style="font-weight:500">${c.name}</div><div style="font-size:10px;color:var(--text3);margin-top:2px">${c.target||''}</div></td>
+      <td><span class="cat-tag" style="background:${C.bg};color:${C.color}">${C.id} ${C.short}</span><br><span class="tag ${c.type==='star'?'tag-star':'tag-ext'}">${c.type==='star'?'★ 內訓':'外訓'}</span></td>
+      <td style="font-size:11px">${c.hours||'—'}</td>
+      <td style="font-size:11px">${c.fee||'—'}</td>
+      <td class="outline-col">${(c.outline||'').substring(0,80)}${(c.outline||'').length>80?'…':''}</td>
+      <td><div style="display:flex;flex-direction:column;gap:4px">
+        ${c.url?`<a class="link-btn" href="${c.url}" target="_blank">🔗 課程頁</a>`:''}
+        <button class="link-btn" style="background:none;border:none;cursor:pointer;color:var(--accent)" onclick="editCourse(${ci})">✏️ 編輯</button>
+        <button class="link-btn" style="background:none;border:none;cursor:pointer;color:var(--red)" onclick="deleteCourse(${ci})">🗑️ 刪除</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function buildCatSelect(){
+  const sel=document.getElementById('cat-select');
+  CATEGORIES.forEach(c=>sel.add(new Option(`${c.id} ${c.short}`,c.id)));
+}
+function buildModalOptions(){
+  const si=document.getElementById('f-inst');
+  si.innerHTML=INST_DATA.map(i=>`<option value="${i.id}">${i.id} — ${i.name}</option>`).join('');
+  const sc=document.getElementById('f-cat');
+  sc.innerHTML=CATEGORIES.map(c=>`<option value="${c.id}">${c.id} ${c.short}</option>`).join('');
+}
+
+function renderInst(){
+  const starEl=document.getElementById('inst-grid-star');
+  const extEl=document.getElementById('inst-grid-ext');
+  starEl.innerHTML=''; extEl.innerHTML='';
+  INST_DATA.forEach(inst=>{
+    const n=courses.filter(c=>c.inst===inst.id).length;
+    const cats=[...new Set(courses.filter(c=>c.inst===inst.id).map(c=>c.cat))];
+    const card=document.createElement('div');
+    card.className='inst-card'+(inst.type==='ext'?' internal-only':'');
+    card.innerHTML=`
+      <div class="inst-header">
+        <div style="display:flex;align-items:center;gap:10px;flex:1">
+          <div class="inst-icon" style="background:${inst.iconBg}20;color:${inst.iconBg}">${inst.icon}</div>
+          <div class="inst-meta" style="padding:0">
+            <div class="inst-name">${inst.name}</div>
+            <div class="inst-en">${inst.en}</div>
+            <span class="inst-type-badge ${inst.type==='star'?'inst-type-star':'inst-type-ext'}">${inst.type==='star'?'★ 可企業內訓':'外訓為主'}</span>
+          </div>
+        </div>
+      </div>
+      <div class="inst-desc">${inst.desc}</div>
+      <div class="inst-cats">${cats.map(c=>{const C=getCat(c);return `<span class="cat-tag" style="background:${C.bg};color:${C.color}">${C.id} ${C.short}</span>`;}).join('')||'<span style="font-size:10px;color:var(--text3)">尚無課程</span>'}</div>
+      <div class="inst-stats">
+        <div class="inst-stat"><div class="inst-stat-n">${n}</div><div class="inst-stat-l">課程數</div></div>
+        <div class="inst-stat"><div class="inst-stat-n">${cats.length}</div><div class="inst-stat-l">類別數</div></div>
+      </div>
+      <div class="inst-url"><a href="${inst.url}" target="_blank" style="font-size:11px;color:var(--accent)">🔗 ${inst.url}</a></div>`;
+    (inst.type==='star'?starEl:extEl).appendChild(card);
+  });
+}
+
+function renderMatrix(){
+  const t=document.getElementById('matrix-table');
+  const instIds=INST_DATA.map(i=>i.id);
+  t.innerHTML=`<tr><th class="row-head">Realtek 類別</th>${INST_DATA.map(i=>`<th style="color:${i.type==='star'?'var(--green)':'var(--gray)'};">${i.type==='star'?'★':''}<br>${i.id}</th>`).join('')}</tr>`;
+  CATEGORIES.forEach((cat,ri)=>{
+    const tr=document.createElement('tr');
+    if(ri%2===1) tr.className='matrix-row-alt';
+    tr.innerHTML=`<td class="row-head"><span style="font-size:11px;font-weight:700;color:${cat.color}">${cat.id}</span> ${cat.short}</td>`+
+      instIds.map(iid=>{
+        const cs=courses.filter(c=>c.inst===iid&&c.cat===cat.id);
+        if(!cs.length) return `<td><span class="matrix-cell-zero">—</span></td>`;
+        if(matrixMode==='count') return `<td><span class="matrix-cell-count">${cs.length}</span></td>`;
+        return `<td><div class="matrix-cell-count">${cs.length}</div><div class="matrix-cell-names">${cs.map(c=>c.code).join('<br>')}</div></td>`;
+      }).join('');
+    t.appendChild(tr);
+  });
+}
+
+function setMatrixMode(m){
+  matrixMode=m;
+  document.getElementById('matrix-chip-count').classList.toggle('active',m==='count');
+  document.getElementById('matrix-chip-names').classList.toggle('active',m==='names');
+  renderMatrix();
+}
+
+function renderEditTable(){
+  const tbody=document.getElementById('edit-tbody');
+  tbody.innerHTML=courses.map((c,i)=>{
+    const I=getInst(c.inst);const C=getCat(c.cat);
+    return `<tr>
+      <td style="color:${I.iconBg};font-weight:600;font-size:11px">${I.id}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:10px">${c.code}</td>
+      <td style="font-size:11px;font-weight:500">${c.name.substring(0,50)}${c.name.length>50?'…':''}</td>
+      <td><span class="cat-tag" style="background:${C.bg};color:${C.color};font-size:9px">${C.id} ${C.short}</span></td>
+      <td style="font-size:10px">${c.hours||'—'}</td>
+      <td style="font-size:10px">${c.fee||'—'}</td>
+      <td style="font-size:10px;max-width:100px;overflow:hidden;text-overflow:ellipsis">${c.url?`<a href="${c.url}" target="_blank" style="color:var(--accent);font-size:9px">${c.url.substring(0,35)}…</a>`:'—'}</td>
+      <td><button class="btn btn-sm" onclick="editCourse(${i})" style="margin-right:4px">編輯</button><button class="btn btn-sm" style="color:var(--red);border-color:var(--red)" onclick="deleteCourse(${i})">刪除</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderInstUrlEdit(){
+  document.getElementById('inst-url-edit').innerHTML=INST_DATA.map(i=>`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <span style="font-size:11px;font-weight:700;color:${i.iconBg};width:60px;flex-shrink:0">${i.id}</span>
+      <input class="form-input" style="font-size:11px;padding:4px 8px" value="${i.url}" onchange="updateInstUrl('${i.id}',this.value)">
+    </div>`).join('');
+}
+function updateInstUrl(id,val){
+  const inst=INST_DATA.find(i=>i.id===id);
+  if(inst){ inst.url=val; renderInst(); }
+}
+
+function openAddModal(){
+  editingIdx=-1;
+  document.getElementById('modal-title').textContent='新增課程';
+  document.getElementById('edit-idx').value='';
+  ['f-inst','f-code','f-name','f-cat','f-type','f-hours','f-fee','f-target','f-outline','f-url'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el.tagName==='SELECT') el.selectedIndex=0; else el.value='';
+  });
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function editCourse(idx){
+  const c=courses[idx];
+  editingIdx=idx;
+  document.getElementById('modal-title').textContent='編輯課程';
+  document.getElementById('edit-idx').value=idx;
+  document.getElementById('f-inst').value=c.inst;
+  document.getElementById('f-code').value=c.code;
+  document.getElementById('f-name').value=c.name;
+  document.getElementById('f-cat').value=c.cat;
+  document.getElementById('f-type').value=c.type;
+  document.getElementById('f-hours').value=c.hours||'';
+  document.getElementById('f-fee').value=c.fee||'';
+  document.getElementById('f-target').value=c.target||'';
+  document.getElementById('f-outline').value=c.outline||'';
+  document.getElementById('f-url').value=c.url||'';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function saveCourse(){
+  const obj={
+    inst:document.getElementById('f-inst').value,
+    code:document.getElementById('f-code').value.trim(),
+    name:document.getElementById('f-name').value.trim(),
+    cat:document.getElementById('f-cat').value,
+    type:document.getElementById('f-type').value,
+    hours:document.getElementById('f-hours').value.trim(),
+    fee:document.getElementById('f-fee').value.trim(),
+    target:document.getElementById('f-target').value.trim(),
+    outline:document.getElementById('f-outline').value.trim(),
+    url:document.getElementById('f-url').value.trim(),
+  };
+  if(!obj.name){alert('請填寫課程名稱');return;}
+  if(editingIdx>=0) courses[editingIdx]=obj; else courses.push(obj);
+  saveData(); buildInstChips(); closeModal();
+}
+function deleteCourse(idx){
+  if(!confirm(`確定刪除課程「${courses[idx].name}」？`)) return;
+  courses.splice(idx,1); saveData(); buildInstChips();
+}
+function closeModal(){ document.getElementById('modal-overlay').classList.remove('open'); }
+function closeModalIfOverlay(e){ if(e.target===document.getElementById('modal-overlay')) closeModal(); }
+
+function exportData(){
+  const blob=new Blob([JSON.stringify(courses,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`Realtek_AI課程資料_${new Date().toLocaleDateString('zh-TW').replace(/\//g,'-')}.json`;
+  a.click();
+}
+function importData(e){
+  const file=e.target.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{courses=JSON.parse(ev.target.result); saveData(); buildInstChips(); alert('匯入成功！共 '+courses.length+' 筆課程');}
+    catch{alert('JSON 格式錯誤，請確認檔案格式');}
+  };
+  r.readAsText(file); e.target.value='';
+}
+
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item')[['dashboard','courses','institutions','matrix','edit'].indexOf(id)].classList.add('active');
+}
+
+function init(){
+  loadData(); buildInstChips(); buildCatSelect(); buildModalOptions(); renderAll();
+}
+init();
+</script>
+</body>
+</html>

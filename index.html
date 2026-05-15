@@ -506,48 +506,61 @@ textarea.form-input{resize:vertical;min-height:70px;line-height:1.5}
 <!-- AI Refresh Page -->
 <div class="page" id="page-airefresh">
   <div class="topbar">
-    <div><div class="topbar-title">🤖 AI 課程刷新</div><div class="topbar-sub">貼上機構課程頁網址，Claude 自動分析並建議新課程</div></div>
+    <div><div class="topbar-title">🤖 AI 課程刷新</div><div class="topbar-sub">產生 Prompt → 貼到 Claude 對話取得結果 → 匯入平台</div></div>
   </div>
   <div class="content">
 
-    <!-- Step 1: Input -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px">
-      <div class="section-title">Step 1　輸入課程來源</div>
-      <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        <div>
-          <label class="form-label" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);display:block;margin-bottom:5px">目標機構</label>
-          <select class="form-input" id="refresh-inst" style="font-size:13px">
-            <option value="">— 選擇機構 —</option>
-          </select>
+    <div style="background:var(--accent-lt);border:1px solid var(--accent);border-radius:var(--radius-lg);padding:14px 18px;margin-bottom:20px;font-size:12px;color:var(--accent);line-height:1.8">
+      <strong>使用流程：</strong>① 選擇機構與類別 → ② 點「產生 Prompt」→ ③ 複製 Prompt 貼到 Claude 新對話視窗 → ④ 把 Claude 回傳的 JSON 貼回下方 → ⑤ 點「解析並預覽」→ ⑥ 確認後「匯入課程」
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px">
+        <div class="section-title" style="margin-bottom:14px">Step 1　設定條件</div>
+        <div class="form-row">
+          <label class="form-label">目標機構</label>
+          <select class="form-input" id="refresh-inst" style="font-size:12px"></select>
         </div>
-        <div>
-          <label class="form-label" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);display:block;margin-bottom:5px">對應 Realtek 類別（可複選）</label>
-          <select class="form-input" id="refresh-cat" style="font-size:13px">
-            <option value="">— 全部類別 —</option>
-          </select>
+        <div class="form-row">
+          <label class="form-label">對應 Realtek 類別（可留空=全部）</label>
+          <select class="form-input" id="refresh-cat" style="font-size:12px"></select>
         </div>
+        <div class="form-row">
+          <label class="form-label">補充需求（可選）</label>
+          <textarea class="form-input" id="refresh-hint" rows="3" placeholder="如：重點放在 LLM 相關、只要企業內訓課程、主管培訓方向…" style="font-size:12px"></textarea>
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px" onclick="generateRefreshPrompt()">📋 產生 Prompt</button>
       </div>
-      <div style="margin-top:12px">
-        <label class="form-label" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);display:block;margin-bottom:5px">課程頁面 URL（貼上機構課程列表頁或特定課程頁）</label>
-        <input class="form-input" id="refresh-url" placeholder="https://www.iiiedu.org.tw/courses/  或  https://aiacademy.tw/genai2026-courses/ …" style="font-size:13px">
-        <div style="font-size:10px;color:var(--text3);margin-top:4px">Claude 會根據此 URL 的機構背景知識與你填寫的補充說明來建議課程，無需能實際爬取網頁</div>
-      </div>
-      <div style="margin-top:12px">
-        <label class="form-label" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);display:block;margin-bottom:5px">補充說明（可選）</label>
-        <textarea class="form-input" id="refresh-hint" rows="2" placeholder="如：重點放在 LLM 與 RAG 相關課程、只要企業內訓課程、主管培訓方向…" style="font-size:13px"></textarea>
-      </div>
-      <div style="margin-top:14px;display:flex;align-items:center;gap:10px">
-        <button class="btn btn-primary" id="refresh-run-btn" onclick="runAIRefresh()" style="padding:9px 20px;font-size:13px">
-          🤖 啟動 AI 課程刷新
-        </button>
-        <span id="refresh-status" style="font-size:12px;color:var(--text3)"></span>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px">
+        <div class="section-title" style="margin-bottom:14px">Step 2　複製 Prompt → 貼到 Claude</div>
+        <div style="position:relative">
+          <textarea id="refresh-prompt-output" readonly rows="10"
+            style="width:100%;font-size:11px;font-family:'DM Mono',monospace;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px;resize:none;color:var(--text2);line-height:1.5"
+            placeholder="點左側「產生 Prompt」按鈕後，Prompt 會出現在這裡…"></textarea>
+          <button onclick="copyPrompt()" id="copy-prompt-btn"
+            style="position:absolute;top:8px;right:8px;padding:4px 10px;font-size:11px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer">
+            複製
+          </button>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:var(--text3)">複製後開啟新的 Claude 對話貼上，取得 JSON 結果</div>
       </div>
     </div>
 
-    <!-- Step 2: Results -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;margin-bottom:16px">
+      <div class="section-title" style="margin-bottom:14px">Step 3　貼上 Claude 回傳的 JSON → 預覽並匯入</div>
+      <textarea id="refresh-json-input" rows="6"
+        style="width:100%;font-size:11px;font-family:'DM Mono',monospace;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px;resize:vertical;color:var(--text2);line-height:1.5"
+        placeholder='在此貼上 Claude 回傳的 JSON 陣列，格式如下：&#10;[&#10;  {"code":"III-SD04","name":"課程名稱","cat":"02","type":"star","hours":"21小時","fee":"請洽報名","target":"工程師","outline":"大綱摘要","url":"https://..."},&#10;  ...&#10;]'></textarea>
+      <div style="display:flex;gap:10px;margin-top:10px;align-items:center">
+        <button class="btn btn-primary" onclick="parseAndPreviewJSON()">🔍 解析並預覽</button>
+        <span id="parse-status" style="font-size:12px;color:var(--text3)"></span>
+      </div>
+    </div>
+
     <div id="refresh-results-wrap" style="display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div class="section-title">Step 2　確認建議課程</div>
+        <div class="section-title">Step 4　確認課程清單</div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-sm" onclick="selectAllSuggestions(true)">全選</button>
           <button class="btn btn-sm" onclick="selectAllSuggestions(false)">全不選</button>
@@ -555,7 +568,7 @@ textarea.form-input{resize:vertical;min-height:70px;line-height:1.5}
         </div>
       </div>
       <div style="background:var(--amber-lt);border:1px solid #E8C86A;border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:11px;color:var(--amber)">
-        ⚠️ AI 建議僅供參考，請人工確認課程名稱、時數、費用與官網是否相符後再匯入。匯入後可在「更新課程來源」頁面隨時編輯。
+        ⚠️ 請確認課程名稱、時數、費用是否與官網相符後再匯入。匯入後可在「更新課程來源」頁面隨時編輯。
       </div>
       <div id="refresh-results" style="display:flex;flex-direction:column;gap:10px"></div>
       <div id="import-toast" style="display:none;margin-top:14px;padding:10px 16px;background:var(--green-lt);border:1px solid var(--green);border-radius:var(--radius);font-size:12px;color:var(--green)"></div>
@@ -564,8 +577,6 @@ textarea.form-input{resize:vertical;min-height:70px;line-height:1.5}
   </div>
 </div>
 
-</main>
-</div>
 
 <!-- Course Detail Drawer -->
 <div id="detail-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200" onclick="closeDetail()"></div>
@@ -1187,46 +1198,26 @@ function renderCheckResults(results){
 }
 
 /* ── AI AUTO-CLASSIFY INSTITUTION ── */
-async function autoClassifyAndFill(){
-  const name=document.getElementById('new-inst-name')?.value||'';
-  const url=document.getElementById('new-inst-url')?.value||'';
-  const desc=document.getElementById('new-inst-desc')?.value||'';
+function autoClassifyAndFill(){
+  const name=(document.getElementById('new-inst-name')?.value||'').toLowerCase();
+  const url=(document.getElementById('new-inst-url')?.value||'').toLowerCase();
+  const desc=(document.getElementById('new-inst-desc')?.value||'').toLowerCase();
   if(!name){alert('請先填寫機構名稱');return;}
-  const btn=document.getElementById('ai-classify-btn');
-  if(btn){btn.textContent='🤖 分析中…';btn.disabled=true;}
-  try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',max_tokens:200,
-        messages:[{role:'user',content:`你是 Realtek 研發創新學院課程採購顧問。根據以下機構資訊判斷性質，只回傳 JSON。
-
-機構名稱：${name}
-官網：${url||'（未填）'}
-簡介：${desc||'（未填）'}
-
-判斷標準：
-- "star"（★可企業內訓）：有企業包班/講師外派服務，課程可移至企業內辦。
-- "ext"（僅外訓）：政府補助課程依法不得企業內訓，或個人訂閱線上平台。
-
-只回傳：{"type":"star","reason":"理由20字內","confidence":"high/medium/low"}`}]
-      })
-    });
-    const data=await res.json();
-    const text=data.content?.[0]?.text||'{}';
-    const parsed=JSON.parse(text.replace(/```json?|```/g,'').trim());
-    document.getElementById('new-inst-type').value=parsed.type||'star';
-    const r=document.getElementById('ai-reason');
-    r.textContent=`AI判斷：${parsed.type==='star'?'★ 可企業內訓':'外訓為主'} — ${parsed.reason||''}（信心度：${parsed.confidence||'?'}）`;
-    r.style.display='block';
-  }catch(e){
-    const r=document.getElementById('ai-reason');
-    r.textContent='API 呼叫失敗，請手動選擇。錯誤：'+e.message;
-    r.style.cssText+=';background:var(--red-lt);color:var(--red);border-color:var(--red)';
-    r.style.display='block';
-  }
-  if(btn){btn.textContent='🤖 AI 自動判斷';btn.disabled=false;}
+  /* Rule-based local classification */
+  const extKeywords=['勞動','wda','補助','職訓','就業服務','政府','ojt.wda','taiwanjobs','訂閱','個人帳號','線上平台','monthly','subscription'];
+  const starKeywords=['企業包班','講師外派','企業服務','內訓','business','corporate','enterprise','b2b','biz.','for business','包班','客製'];
+  let type='star', reason='預設為★可企業內訓', conf='low';
+  const allText=name+' '+url+' '+desc;
+  const isExt=extKeywords.some(k=>allText.includes(k));
+  const isStar=starKeywords.some(k=>allText.includes(k));
+  if(isExt&&!isStar){ type='ext'; reason='偵測到政府補助或訂閱制關鍵字'; conf='medium'; }
+  else if(isStar){ type='star'; reason='偵測到企業包班/內訓服務關鍵字'; conf='high'; }
+  else { type='star'; reason='無明確外訓限制，預設可企業內訓'; conf='low'; }
+  document.getElementById('new-inst-type').value=type;
+  const r=document.getElementById('ai-reason');
+  r.textContent=`規則判斷：${type==='star'?'★ 可企業內訓':'外訓為主'} — ${reason}（信心度：${conf}）`;
+  r.style.background='var(--accent-lt)'; r.style.color='var(--accent)'; r.style.borderColor='var(--accent)';
+  r.style.display='block';
 }
 function clearAiReason(){ const r=document.getElementById('ai-reason');if(r)r.style.display='none'; }
 
@@ -1324,7 +1315,7 @@ ${hint?`補充需求：${hint}`:''}
 ]`;
 
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
+    const res=await fetch('/api/chat',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({

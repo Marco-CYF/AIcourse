@@ -376,9 +376,6 @@ textarea.form-input{resize:vertical;min-height:70px;line-height:1.5}
     </div>
   </div>
 </div>
-</main>
-</div>
-
 <!-- Health Check Page -->
 <div class="page" id="page-health">
   <div class="topbar">
@@ -565,6 +562,9 @@ textarea.form-input{resize:vertical;min-height:70px;line-height:1.5}
     </div>
 
   </div>
+</div>
+
+</main>
 </div>
 
 <!-- Course Detail Drawer -->
@@ -766,18 +766,33 @@ let matrixMode = 'count';
 let activeInsts = new Set();
 let editingIdx = -1;
 
+const _ls = {
+  get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
 function loadData(){
-  const saved = localStorage.getItem('rtk-courses');
-  courses = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DEFAULT_COURSES));
+  try{
+    const saved = _ls.get('rtk-courses');
+    courses = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DEFAULT_COURSES));
+  }catch(e){ courses = JSON.parse(JSON.stringify(DEFAULT_COURSES)); }
 }
-function saveData(){ localStorage.setItem('rtk-courses',JSON.stringify(courses)); localStorage.setItem('rtk-lastupdate',new Date().toLocaleDateString('zh-TW')); renderAll(); }
+function saveData(){
+  _ls.set('rtk-courses',JSON.stringify(courses));
+  _ls.set('rtk-lastupdate',new Date().toLocaleDateString('zh-TW'));
+  renderAll();
+}
 function getInst(id){ return INST_DATA.find(i=>i.id===id)||{name:id,iconBg:'#888',type:'star'}; }
 function getCat(id){ return CATEGORIES.find(c=>c.id===id)||{short:id,color:'#888',bg:'#eee'}; }
 
 function renderAll(){
-  const d = localStorage.getItem('rtk-lastupdate');
-  if(d) document.getElementById('last-update').textContent=d;
-  renderDashboard(); renderTable(); renderInst(); renderMatrix(); renderEditTable(); renderInstUrlEdit();
+  try{ const d=_ls.get('rtk-lastupdate'); if(d) document.getElementById('last-update').textContent=d; }catch(e){}
+  try{ renderDashboard(); }catch(e){ console.warn('renderDashboard:',e); }
+  try{ renderTable(); }catch(e){ console.warn('renderTable:',e); }
+  try{ renderInst(); }catch(e){ console.warn('renderInst:',e); }
+  try{ renderMatrix(); }catch(e){ console.warn('renderMatrix:',e); }
+  try{ renderEditTable(); }catch(e){}
+  try{ renderInstUrlEdit(); }catch(e){}
 }
 
 function renderDashboard(){
@@ -1033,11 +1048,12 @@ function importData(e){
 
 function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
-  const pages=['dashboard','courses','institutions','matrix','edit','health','addinst','airefresh'];
-  const idx=pages.indexOf(id);
-  if(idx>=0) document.querySelectorAll('.nav-item')[idx].classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    n.classList.remove('active');
+    if(n.getAttribute('onclick')==="showPage('"+id+"')") n.classList.add('active');
+  });
+  const pg=document.getElementById('page-'+id);
+  if(pg) pg.classList.add('active');
   if(id==='health'){
     const ul=document.getElementById('total-url-count');
     if(ul) ul.textContent=[...new Set(courses.map(c=>c.url).filter(Boolean))].length;
@@ -1227,9 +1243,9 @@ function addInstitution(){
   if(INST_DATA.find(i=>i.id===id)){alert(`機構簡稱「${id}」已存在，請使用不同的簡稱`);return;}
   INST_DATA.push({id,name,en:en||id,icon,iconBg:color,type,desc,url:url||'',courses:{}});
   /* Save custom insts */
-  const custom=JSON.parse(localStorage.getItem('rtk-custom-insts')||'[]');
+  const custom=JSON.parse(_ls.get('rtk-custom-insts')||'[]');
   custom.push({id,name,en,icon,iconBg:color,type,desc,url});
-  localStorage.setItem('rtk-custom-insts',JSON.stringify(custom));
+  _ls.set('rtk-custom-insts',JSON.stringify(custom));
   /* Clear form */
   ['new-inst-id','new-inst-name','new-inst-en','new-inst-url','new-inst-desc','new-inst-icon'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
   document.getElementById('ai-reason').style.display='none';
@@ -1408,8 +1424,9 @@ function importSelected(){
   const inst=getInst(instId);
   renderSuggestions(suggestedCourses,inst,'');
 }
+function renderInstListManage(){
   const wrap=document.getElementById('inst-list-manage');if(!wrap)return;
-  const custom=JSON.parse(localStorage.getItem('rtk-custom-insts')||'[]').map(i=>i.id);
+  const custom=JSON.parse(_ls.get('rtk-custom-insts')||'[]').map(i=>i.id);
   wrap.innerHTML=INST_DATA.map(inst=>`
     <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)">
       <div style="width:28px;height:28px;border-radius:6px;background:${inst.iconBg}20;color:${inst.iconBg};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">${inst.icon}</div>
@@ -1425,12 +1442,12 @@ function removeInst(id){
   if(!confirm(`確定刪除機構「${id}」？相關課程不會被刪除，但機構資訊將消失。`))return;
   const idx=INST_DATA.findIndex(i=>i.id===id);
   if(idx>=0) INST_DATA.splice(idx,1);
-  const custom=JSON.parse(localStorage.getItem('rtk-custom-insts')||'[]').filter(i=>i.id!==id);
-  localStorage.setItem('rtk-custom-insts',JSON.stringify(custom));
+  const custom=JSON.parse(_ls.get('rtk-custom-insts')||'[]').filter(i=>i.id!==id);
+  _ls.set('rtk-custom-insts',JSON.stringify(custom));
   buildModalOptions(); renderInst(); renderInstListManage(); renderAll();
 }
 function loadCustomInsts(){
-  const custom=JSON.parse(localStorage.getItem('rtk-custom-insts')||'[]');
+  const custom=JSON.parse(_ls.get('rtk-custom-insts')||'[]');
   custom.forEach(inst=>{ if(!INST_DATA.find(i=>i.id===inst.id)) INST_DATA.push(inst); });
 }
 

@@ -107,6 +107,17 @@ td.outline-col{font-size:11px;color:var(--text2);line-height:1.5}
 .inst-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;cursor:pointer;transition:all .15s;position:relative}
 .inst-card:hover{border-color:var(--border2);box-shadow:var(--shadow-md);transform:translateY(-1px)}
 .inst-card.internal-only{opacity:.65}
+.inst-card{cursor:pointer}
+.inst-card-expanded{border-color:var(--accent)!important;box-shadow:var(--shadow-md)!important}
+.inst-course-list{margin-top:12px;border-top:1px solid var(--border);padding-top:10px;display:none}
+.inst-course-list.open{display:block}
+.inst-course-item{display:flex;align-items:baseline;gap:7px;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px;cursor:pointer;transition:background .1s;border-radius:4px;padding-left:4px}
+.inst-course-item:last-child{border-bottom:none}
+.inst-course-item:hover{background:var(--surface2)}
+.inst-course-code{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);flex-shrink:0;width:90px}
+.inst-course-name{color:var(--text);font-weight:500;flex:1;line-height:1.4}
+.inst-toggle-btn{font-size:11px;color:var(--accent);background:none;border:1px solid var(--accent);border-radius:20px;padding:3px 10px;cursor:pointer;margin-top:8px;width:100%;transition:all .15s}
+.inst-toggle-btn:hover{background:var(--accent-lt)}
 .inst-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
 .inst-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0}
 .inst-meta{flex:1;padding-left:10px}
@@ -213,6 +224,10 @@ textarea.form-input{resize:vertical;min-height:70px;line-height:1.5}
     <button class="nav-item" onclick="showPage('airefresh')" style="color:rgba(255,220,120,.9)">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
       🤖 AI 課程刷新
+    </button>
+    <button class="nav-item" onclick="showPage('autorefresh')" style="color:rgba(120,220,160,.9)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      🔄 一鍵自動刷新
     </button>
   </nav>
   <div class="sidebar-footer">2026 年度 · 資料最後更新<br><span id="last-update">2025/05/15</span></div>
@@ -578,6 +593,63 @@ textarea.form-input{resize:vertical;min-height:70px;line-height:1.5}
 </div>
 
 
+<!-- Auto Refresh Page -->
+<div class="page" id="page-autorefresh">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">🔄 一鍵自動刷新</div>
+      <div class="topbar-sub">Claude 自動搜尋各機構最新課程，比對現有資料後建議更新</div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-primary" id="auto-refresh-btn" onclick="startAutoRefresh()" style="padding:9px 20px;font-size:13px;gap:6px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        開始刷新所有機構
+      </button>
+    </div>
+  </div>
+  <div class="content">
+    <div style="background:var(--accent-lt);border:1px solid var(--accent);border-radius:var(--radius-lg);padding:12px 16px;margin-bottom:20px;display:flex;gap:12px;align-items:flex-start">
+      <span style="font-size:18px;flex-shrink:0">🔍</span>
+      <div style="font-size:12px;color:var(--accent);line-height:1.8">
+        <strong>運作方式：</strong>Claude 透過 web search 搜尋各機構最新課程，比對現有清單，找出新增或已下架的課程。<br>
+        <strong>注意：</strong>每次刷新約需 30~60 秒。每次建議選 1~3 個機構，結果需人工確認後匯入。
+      </div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;margin-bottom:20px">
+      <div class="section-title" style="margin-bottom:14px">選擇要刷新的機構</div>
+      <div id="refresh-inst-checklist" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px"></div>
+      <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+        <button class="btn btn-sm" onclick="toggleAllInsts(true)">全選</button>
+        <button class="btn btn-sm" onclick="toggleAllInsts(false)">全不選</button>
+        <span style="font-size:11px;color:var(--text3)">建議每次選 1~3 個機構</span>
+      </div>
+    </div>
+    <div id="ar-progress-wrap" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;margin-bottom:20px">
+      <div class="section-title" style="margin-bottom:12px">刷新進度</div>
+      <div id="ar-progress-list" style="display:flex;flex-direction:column;gap:8px"></div>
+      <div style="margin-top:14px;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden">
+        <div id="ar-progress-bar" style="height:100%;width:0;background:var(--green);border-radius:3px;transition:width .5s ease"></div>
+      </div>
+    </div>
+    <div id="ar-results-wrap" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="section-title">搜尋結果 — 建議課程</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm" onclick="arSelectAll(true)">全選</button>
+          <button class="btn btn-sm" onclick="arSelectAll(false)">全不選</button>
+          <button class="btn btn-primary btn-sm" onclick="arImportSelected()">✅ 匯入勾選課程</button>
+        </div>
+      </div>
+      <div style="background:var(--amber-lt);border:1px solid #E8C86A;border-radius:var(--radius);padding:10px 14px;margin-bottom:14px;font-size:11px;color:var(--amber)">
+        ⚠️ 以下為 Claude 根據網路搜尋結果建議的課程，請確認資訊與官網相符後再匯入。
+      </div>
+      <div id="ar-results-list" style="display:flex;flex-direction:column;gap:10px"></div>
+      <div id="ar-import-toast" style="display:none;margin-top:14px;padding:12px 16px;background:var(--green-lt);border:1px solid var(--green);border-radius:var(--radius);font-size:12px;color:var(--green)"></div>
+    </div>
+  </div>
+</div>
+
+
 <!-- Course Detail Drawer -->
 <div id="detail-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200" onclick="closeDetail()"></div>
 <div id="detail-drawer" style="display:none;position:fixed;top:0;right:0;width:440px;height:100vh;background:var(--surface);box-shadow:-4px 0 24px rgba(0,0,0,.12);z-index:201;overflow-y:auto;flex-direction:column">
@@ -717,59 +789,121 @@ const INST_DATA = [
 ];
 
 const DEFAULT_COURSES = [
-  {inst:'TCFST',code:'TCF-SD01',name:'生成式AI技術應用與LLM工程實務',cat:'02',type:'star',hours:'21小時',fee:'請洽報名',target:'工程師/PM',outline:'LLM架構、Prompt Engineering、RAG系統建置、Agent應用設計、企業AI部署',url:'https://edu.tcfst.org.tw'},
-  {inst:'TCFST',code:'TCF-SD02',name:'生成式AI與ChatGPT企業應用工作坊',cat:'02',type:'star',hours:'7小時',fee:'請洽報名',target:'各職能員工',outline:'ChatGPT進階應用、Prompt設計策略、企業知識庫建立、自動化工作流',url:'https://edu.tcfst.org.tw'},
-  {inst:'TCFST',code:'TCF-DD01',name:'深度學習與電腦視覺實務班',cat:'03',type:'star',hours:'21小時',fee:'請洽報名',target:'AI/ML工程師',outline:'CNN/Transformer、物件偵測(YOLO)、語意分割、影像生成(GAN/Diffusion)、模型部署',url:'https://edu.tcfst.org.tw'},
-  {inst:'TCFST',code:'TCF-GN01',name:'人工智慧應用趨勢與策略論壇',cat:'04',type:'star',hours:'7小時',fee:'請洽報名',target:'主管/決策者',outline:'AI產業發展趨勢、各產業AI落地案例、AI倫理與治理、企業導入策略框架',url:'https://edu.tcfst.org.tw'},
-  {inst:'TAICA',code:'TAI-SD01',name:'生成式AI應用系統工程（NCKU）',cat:'02',type:'star',hours:'請洽學程',fee:'請洽招生',target:'工程師/研究生',outline:'LLM系統架構、RAG工程實作、Fine-tuning技術、多模態AI系統設計',url:'https://taicatw.net'},
-  {inst:'TAICA',code:'TAI-DD01',name:'深度學習 Deep Learning（NYCU）',cat:'03',type:'star',hours:'請洽學程',fee:'請洽招生',target:'AI/ML工程師（★×10難度）',outline:'深度學習理論基礎、CNN/RNN/Transformer、強化學習、前沿研究方向',url:'https://taicatw.net'},
-  {inst:'TAICA',code:'TAI-GN01',name:'⭐ AI倫理與法律（THU跨學程）',cat:'04',type:'star',hours:'請洽學程',fee:'請洽招生',target:'各職能員工/主管',outline:'AI倫理框架、歐盟AI法案、台灣AI治理、資料隱私、演算法偏見防治',url:'https://taicatw.net'},
-  {inst:'UUU',code:'UUU-SD01',name:'Claude Code + GitHub Copilot AI程式開發',cat:'02',type:'star',hours:'21小時',fee:'請洽報名',target:'工程師/開發者',outline:'Claude Code CLI操作、GitHub Copilot Agent模式、AI輔助開發最佳實務、Vibe Coding工作流',url:'https://uuu.com.tw'},
-  {inst:'UUU',code:'UUU-SD02',name:'AWS Bedrock 生成式AI應用開發',cat:'02',type:'star',hours:'21小時',fee:'請洽報名',target:'AWS工程師/後端工程師',outline:'Amazon Bedrock生態系、Claude on AWS實作、Knowledge Base建置、Agent for Bedrock',url:'https://uuu.com.tw'},
-  {inst:'UUU',code:'UUU-SD03',name:'GCP Vertex AI 大型語言模型應用',cat:'02',type:'star',hours:'21小時',fee:'請洽報名',target:'GCP工程師/ML工程師',outline:'Vertex AI平台、Gemini API應用、RAG on GCP、模型微調與部署',url:'https://uuu.com.tw'},
-  {inst:'UUU',code:'UUU-DD01',name:'AI電腦視覺應用開發實戰',cat:'03',type:'star',hours:'21小時',fee:'請洽報名',target:'軟硬體工程師',outline:'OpenCV、物件偵測YOLO系列、人臉辨識、工業視覺品檢、Edge部署',url:'https://uuu.com.tw'},
-  {inst:'UUU',code:'UUU-DV01',name:'AI資安：SecAI+ 認證培訓',cat:'06',type:'star',hours:'21小時',fee:'請洽報名',target:'資安工程師/IT管理者',outline:'AI系統資安威脅模型、對抗式攻擊防禦、AI安全評估、AI資安合規',url:'https://uuu.com.tw'},
-  {inst:'PCSchool',code:'PC-SD01',name:'★ Python AI應用與部署（LLM/RAG/LangChain）',cat:'02',type:'star',hours:'36小時（可客製）',fee:'請洽企業服務',target:'有Python基礎工程師',outline:'Transformer架構、LLM部署、RAG建置、LangChain/Agent整合、CI/CD自動化部署',url:'https://www.pcschool.com.tw/ai-programming/outline/a1300004'},
-  {inst:'PCSchool',code:'PC-SD02',name:'★ Microsoft Azure AI 應用實戰營（AI-103認證）',cat:'02',type:'star',hours:'36小時（可客製）',fee:'請洽企業服務',target:'.NET/Python工程師',outline:'Azure生成式AI應用、Azure AI Agent、自然語言解決方案、Microsoft Applied Skills認證',url:'https://www.pcschool.com.tw/ai-programming/outline/a1300005'},
-  {inst:'PCSchool',code:'PC-DD01',name:'★ Python影像辨識與智慧製造（OpenCV/YOLO）',cat:'03',type:'star',hours:'36小時（可客製）',fee:'請洽企業服務',target:'有Python基礎工程師',outline:'OpenCV影像處理、深度學習模型調優、YOLO物件偵測、影像分割、MediaPipe、模型部署',url:'https://www.pcschool.com.tw/ai-programming/outline/a1300003'},
-  {inst:'PCSchool',code:'PC-DD02',name:'★ Python商業分析決策（資料科學/機器學習）',cat:'03',type:'star',hours:'36小時（可客製）',fee:'請洽企業服務',target:'資料分析師/研發工程師',outline:'NumPy/Pandas/SQL、探索性資料分析(EDA)、統計分析、機器學習(回歸/分類/Pipeline)、資料視覺化',url:'https://www.pcschool.com.tw/ai-programming/outline/a1300002'},
-  {inst:'PCSchool',code:'PC-GN01',name:'★ 生成式AI職場應用進階班（企業客製版）',cat:'04',type:'star',hours:'依需求規劃',fee:'請洽企業服務',target:'各職能員工/主管',outline:'ChatGPT/Gemini/Copilot進階Prompt策略、AI輔助文件製作、Microsoft 365 Copilot企業整合',url:'https://business.gjunedu.com/Course/182?c=27'},
-  {inst:'TibaMe',code:'TB-SD01',name:'★ 生成式AI與LLM工程師培訓學程',cat:'02',type:'star',hours:'客製化（建議120H+）',fee:'請洽企業服務',target:'Python工程師/資料工程師',outline:'LLM應用架構、RAG系統建置(LlamaIndex/LangChain)、AI Agent開發、MLOps部署(Docker/K8s)',url:'https://business.tibame.com/'},
-  {inst:'TibaMe',code:'TB-SD02',name:'★ AI應用工程師養成班（政府補助班）',cat:'02',type:'star',hours:'300小時（16週）',fee:'政府補助80-100%',target:'AI轉職者/工程師',outline:'資料爬蟲/洗滌、機器學習、深度學習(CNN/RNN)、影像識別、資料視覺化、就業導向',url:'https://www.tibame.com/eventpage/ai-engineer-course-taipei'},
-  {inst:'TibaMe',code:'TB-DD01',name:'★ Python深度學習實戰（真人直播）',cat:'03',type:'star',hours:'依班次',fee:'請洽企業服務',target:'ML/AI工程師',outline:'TensorFlow/PyTorch深度學習模型(CNN/RNN/LSTM/Transformer)、遷移學習、模型部署',url:'https://www.tibame.com/courselibrary/artificial-intelligence'},
-  {inst:'TibaMe',code:'TB-DD02',name:'★ NVIDIA DLI 官方認證課程',cat:'03',type:'star',hours:'依模組（半日起）',fee:'企業內訓官方報價',target:'工程師（需有ML基礎）',outline:'深度學習基礎、電腦視覺、NLP(BERT)、CUDA加速計算、Edge AI部署(Jetson)，完課獲NVIDIA認證',url:'https://business.tibame.com/'},
-  {inst:'TibaMe',code:'TB-GN01',name:'★ AI數位轉型企業培訓（主管客製課程）',cat:'04',type:'star',hours:'客製化（3H~多日）',fee:'請洽企業服務',target:'企業主管/HR/PM',outline:'AI工具應用與效能、部門AI導入策略、Copilot/ChatGPT企業整合、AI培訓計畫設計',url:'https://business.tibame.com/'},
-  {inst:'TibaMe',code:'TB-GN02',name:'★ AI資料科學家全方位學程',cat:'04',type:'star',hours:'18週（80H+）',fee:'請洽企業服務',target:'資料工程師/分析師',outline:'Python/ML/深度學習(TF/PyTorch)/影像辨識/NLP/資料視覺化，9項專案實作',url:'https://www.tibame.com/eventpage/ai_datascientist'},
-  {inst:'TibaMe',code:'TB-SH01',name:'★ AIoT/嵌入式AI/Edge AI 企業培訓',cat:'07',type:'star',hours:'客製化',fee:'請洽企業服務',target:'硬體/嵌入式工程師',outline:'IoT平台整合、邊緣AI部署(Raspberry Pi/Jetson)、Edge AI模型壓縮優化、AIoT系統架構',url:'https://business.tibame.com/'},
-  {inst:'III',code:'III-SD01',name:'★ 生成式AI與LLM應用開發實作班',cat:'02',type:'star',hours:'21小時（3天）',fee:'請洽課程報名',target:'Python工程師/AI開發人員',outline:'LLM架構比較、Prompt Engineering設計策略、RAG架構與向量知識庫、AI Agent(LangChain/LlamaIndex)、企業AI系統實作',url:'https://www.iiiedu.org.tw/courses/'},
-  {inst:'III',code:'III-SD02',name:'★ 生成式AI能力認證備考培訓班',cat:'02',type:'star',hours:'14小時（2天）',fee:'請洽課程報名',target:'各職能員工/工程師（備考官方認證）',outline:'生成式AI基礎知識、Prompt Engineering、RAG技術概念、AI倫理法規(EU AI Act)、認證重點解析與模擬試題',url:'https://www.iiiedu.org.tw/certifications/'},
-  {inst:'III',code:'III-SD03',name:'★ Python機器學習進階班',cat:'02',type:'star',hours:'21小時（3天）',fee:'請洽課程報名',target:'有Python基礎工程師/資料分析師',outline:'Scikit-Learn進階、特徵工程、SVM/Random Forest/XGBoost、模型評估(ROC/AUC)、Pipeline、模型部署',url:'https://www.iiiedu.org.tw/ML'},
-  {inst:'III',code:'III-DD01',name:'★ 深度學習與神經網路實務班',cat:'03',type:'star',hours:'21~30小時',fee:'請洽課程報名',target:'ML/AI工程師（有機器學習基礎）',outline:'CNN/RNN/LSTM/Transformer、TensorFlow/PyTorch、遷移學習、正則化/BatchNorm、ONNX/TensorRT部署',url:'https://www.iiiedu.org.tw/courses/'},
-  {inst:'III',code:'III-DD02',name:'★ 人工智慧深度強化學習實作班',cat:'03',type:'star',hours:'21小時（3天）',fee:'請洽課程報名',target:'AI研究人員/工程師（有DL基礎）',outline:'Q-Learning/Policy Gradient/PPO/Actor-Critic、AlphaGo/OpenAI Gym、智慧系統設計實作',url:'https://www.iiiedu.org.tw/REF'},
-  {inst:'III',code:'III-GN01',name:'★ 人工智慧經理人培訓班',cat:'04',type:'star',hours:'14小時（2天）',fee:'請洽課程報名',target:'企業主管/PM/決策者',outline:'AI技術全覽（ML/DL/LLM）、各領域AI落地案例、AI專案ROI評估、AI治理與倫理風險、AI導入計畫藍圖',url:'https://www.iiiedu.org.tw/aitech/'},
-  {inst:'III',code:'III-GN02',name:'★ 生成式AI能力認證（教育部認可國家認證）',cat:'04',type:'star',hours:'線上考試（90分鐘）',fee:'NT$1,300（含稅）',target:'各職能員工（無需程式背景）',outline:'生成式AI基礎/能力強化/應用技能/倫理法律 四大面向，效期2年，可登錄公務人員終身學習護照',url:'https://www.iiiedu.org.tw/certifications/'},
-  {inst:'III',code:'III-GN03',name:'★ AI人工智慧資安升級實作班',cat:'04',type:'star',hours:'14小時（2天）',fee:'請洽課程報名',target:'資安工程師/IT管理者',outline:'AI系統資安威脅模型、對抗式攻擊防禦、AI安全評估方法、隱私保護設計（聯邦學習/差分隱私）、合規框架',url:'https://www.iiiedu.org.tw/aiis/'},
-  {inst:'III',code:'III-DV01',name:'★ AI資訊安全實務（IoT/自動駕駛/智慧製造）',cat:'06',type:'star',hours:'14小時（2天）',fee:'請洽課程報名',target:'資安/DV驗證工程師',outline:'AI應用資安個案分析（IoT/自駕/工業機器人）、AI攻擊防禦策略、安全評估工具、因應措施實作演練',url:'https://www.iiiedu.org.tw/aiis/'},
-  {inst:'III',code:'III-SH01',name:'★ AIoT物聯網智慧創新應用就業養成班',cat:'07',type:'star',hours:'600小時（政府補助）',fee:'政府補助80-100%',target:'IoT/嵌入式工程師/AI轉職者',outline:'Raspberry Pi AIoT、Python/Java ML/OpenCV、Node.js/MongoDB IoT後端、TensorFlow、智慧應用專題、就業媒合',url:'https://www.iiiedu.org.tw/courses/'},
-  {inst:'III',code:'III-DT01',name:'★ AI人工智慧創新應用就業養成班',cat:'08',type:'star',hours:'300~600小時（政府補助）',fee:'政府補助80-100%',target:'AI轉職者（有程式基礎）',outline:'Python/資料分析/ML/DL(TensorFlow)/對話式AI/影像辨識/Web整合、期末專題、就業媒合',url:'https://www.iiiedu.org.tw/courses/jjaient2105/'},
-  {inst:'WDA',code:'WDA-SD01',name:'生成式AI與大型語言模型進階應用',cat:'02',type:'ext',hours:'21小時',fee:'個人負擔20%（補助80%）',target:'工程師/PM/各職能',outline:'LLM核心技術深化、Prompt Engineering進階、RAG架構實作、Fine-tuning概念、AI應用系統開發實戰',url:'https://course.taiwanjobs.gov.tw/course/search-training'},
-  {inst:'WDA',code:'WDA-SD02',name:'AI Agent 實務應用與自動化流程設計',cat:'02',type:'ext',hours:'21小時',fee:'個人負擔20%（補助80%）',target:'工程師/IT/MIS',outline:'AI Agent設計原理、LangChain/AutoGen框架、工作流自動化、RAG知識庫整合、企業AI助理實作',url:'https://course.taiwanjobs.gov.tw/course/search-training'},
-  {inst:'WDA',code:'WDA-SD03',name:'Python程式設計與AI應用開發進階班',cat:'02',type:'ext',hours:'30小時',fee:'個人負擔20%（補助80%）',target:'有Python基礎工程師',outline:'Python進階語法、NumPy/Pandas資料處理、API串接、OpenAI/Claude API整合、AI應用專案實戰',url:'https://course.taiwanjobs.gov.tw/course/search-training'},
-  {inst:'WDA',code:'WDA-DD01',name:'Python機器學習與深度學習實務班',cat:'03',type:'ext',hours:'30小時',fee:'個人負擔20%（補助80%）',target:'有Python基礎工程師',outline:'Scikit-Learn機器學習全流程、TensorFlow/Keras深度學習(CNN/RNN)、影像辨識、模型訓練/評估/部署',url:'https://course.taiwanjobs.gov.tw/course/search-training'},
-  {inst:'WDA',code:'WDA-DD02',name:'電腦視覺與影像辨識AI應用實作',cat:'03',type:'ext',hours:'21小時',fee:'個人負擔20%（補助80%）',target:'軟硬體工程師',outline:'OpenCV影像處理、物件偵測（YOLO/SSD）、人臉辨識、智慧製造視覺品檢、模型部署實作',url:'https://course.taiwanjobs.gov.tw/course/search-training'},
-  {inst:'WDA',code:'WDA-GN01',name:'AI數位素養與職場應用進階班',cat:'04',type:'ext',hours:'18小時',fee:'個人負擔20%（補助80%）',target:'各職能在職員工',outline:'ChatGPT/Gemini/Claude進階應用與Prompt Engineering、AI輔助文件撰寫、職場AI工具整合',url:'https://course.taiwanjobs.gov.tw/course/search-training'},
-  {inst:'WDA',code:'WDA-GN02',name:'企業AI轉型與智慧營運實務',cat:'04',type:'ext',hours:'18小時',fee:'個人負擔20%（補助80%）',target:'企業主管/PM/HR',outline:'AI轉型策略規劃、AI工具選型評估、智慧客服AI應用、AI導入ROI評估、數位轉型案例分析',url:'https://course.taiwanjobs.gov.tw/course/search-training'},
-  {inst:'WDA',code:'WDA-DT01',name:'AI智慧製造與品質管理實務',cat:'08',type:'ext',hours:'21小時',fee:'個人負擔20%（補助80%）',target:'製造/品質/IE工程師',outline:'AI於製造業應用（預測維護/品質檢測/生產排程優化）、工業數據分析技術、智慧工廠架構設計',url:'https://course.taiwanjobs.gov.tw/course/search-training'},
-  {inst:'AIA',code:'AIA-SD01',name:'大型語言模型實作初階班（LLM/自動化流程/RAG入門）',cat:'02',type:'ext',hours:'21小時（3天）實體',fee:'NT$17,000',target:'有興趣的上班族/IT新手（無需程式背景）',outline:'LLM基礎知識與ChatGPT提問技術、Make自動化流程應用、聊天機器人建立、多模態語言模型應用',url:'https://aiacademy.tw/admission-llma-tp/'},
-  {inst:'AIA',code:'AIA-SD02',name:'大型語言模型實作中階班（RAG/Fine-tuning）',cat:'02',type:'ext',hours:'請洽招生簡章',fee:'請洽招生簡章',target:'有LLM基礎的工程師/資料科學家',outline:'RAG實作與向量資料庫建置、Fine-tuning技術實作、企業級聊天機器人開發、LLM架構深度解析',url:'https://aiacademy.tw/admission-llmc-tp/'},
-  {inst:'AIA',code:'AIA-SD03',name:'大型語言模型實作高階班（Agent/生產環境部署）',cat:'02',type:'ext',hours:'請洽招生簡章',fee:'請洽招生簡章',target:'Python工程師/ML工程師（需有LLM基礎）',outline:'AI Agent設計與Multi-Agent協作、地端RAG、LLM Fine-tuning(LoRA/SFT)、生產環境部署與優化',url:'https://aiacademy.tw/admission-llmb-tp/'},
-  {inst:'AIA',code:'AIA-SD04',name:'NLP 專題實作班（自然語言處理/深度學習應用）',cat:'02',type:'ext',hours:'請洽招生簡章',fee:'請洽招生簡章',target:'有Python/ML基礎的工程師',outline:'NLP核心技術（文字分類/情感分析/NER）、Transformer/BERT/GPT應用、RAG與向量搜尋整合',url:'https://aiacademy.tw/admission-tech-nlp-tw/'},
-  {inst:'AIA',code:'AIA-DD01',name:'Edge AI 班（邊緣運算AI/嵌入式模型部署）',cat:'03',type:'ext',hours:'請洽招生簡章',fee:'請洽招生簡章',target:'硬體/嵌入式工程師（有Python基礎）',outline:'Edge AI部署架構設計、模型壓縮量化技術（Pruning/Quantization/KD）、Jetson/Raspberry Pi部署',url:'https://aiacademy.tw/admission-edge-ai/'},
-  {inst:'AIA',code:'AIA-DD02',name:'技術領袖班（ML/DL進階/AI系統架構）',cat:'03',type:'ext',hours:'請洽招生簡章',fee:'請洽招生簡章',target:'資深AI/ML工程師、研究人員（需有DL基礎）',outline:'ML/DL前沿技術深化、AI系統架構設計、大規模模型訓練、業界AI專案Case Study',url:'https://aiacademy.tw/admission-tech-tw/'},
-  {inst:'AIA',code:'AIA-GN01',name:'GenAI 素養認證實作班（含AIATCL™認證）',cat:'04',type:'ext',hours:'45.5小時（7天）實體',fee:'NT$45,000（校友NT$40,000）',target:'企業管理者/行銷/客服/AI初學者',outline:'生成式AI素養培育（LLM/圖像/音樂生成）、ChatGPT Prompt技術、Make自動化流程、GenAI創新競賽；可獲AIA人才認證AIATCL™',url:'https://aiacademy.tw/admission-genai7-tp/'},
-  {inst:'AIA',code:'AIA-GN02',name:'經理人班（AI策略/數位轉型/高管決策）',cat:'04',type:'ext',hours:'請洽招生簡章',fee:'請洽招生簡章',target:'企業主管/CXO/數位長（CDO）',outline:'AI策略規劃與數位轉型路徑、AI技術全覽與業務場景對應、AI投資ROI評估、AI治理與倫理風險管理',url:'https://aiacademy.tw/admission-manager-tp/'},
-  {inst:'AIA',code:'AIA-GN03',name:'經理人 AIPM 班（AI專案管理）',cat:'04',type:'ext',hours:'請洽招生簡章',fee:'請洽招生簡章',target:'企業主管/PM/產品負責人（有AI基礎）',outline:'AI專案規劃與推進方法論、AI需求分析、AI開發流程管理、跨部門協作模式、AI專案風險管理',url:'https://aiacademy.tw/admission-aipm-tp2/'},
-  {inst:'AIA',code:'AIA-DT01',name:'產業 AI 專班（製造業/半導體/ICT應用）',cat:'08',type:'ext',hours:'請洽招生簡章',fee:'請洽招生簡章',target:'製造/半導體/ICT研發工程師',outline:'AI應用於製造業全流程（預測維護/品檢/產能優化）、半導體製程AI應用、工業數據分析、智慧工廠架構',url:'https://aiacademy.tw/admission-manufacturing-tp/'},
+  {inst:'TCFST',code:'15W315-3',name:'Claude Code 工程大師班：工業級 AI 開發與自動化',cat:'02',type:'star',hours:'12,000\n（會員11,000）',fee:'研發/軟體工程師',target:'Vibe Coding/Agent架構、MCP Server 60+、Hooks自動化、Subagent協作、CI/CD整合、Spec Driven方法論、iOS App/電商網站實戰專案',outline:'🔗 報名連結',url:''},
+  {inst:'TCFST',code:'15W308',name:'AI Agent 高階課程實戰工作坊：AutoGen × MCP 實務導入【假日/實體/高階】',cat:'02',type:'star',hours:'10,000（會員11,000；早鳥10,200）',fee:'企業主管、PM、工程師、MIS/IT',target:'AutoGen多代理人協作架構、MCP（Model Context Protocol）工具串接(PDF/API/DB)、AI工作流拆解Workshop、企業AI助理導入企劃書撰寫、Demo成果發表',outline:'🔗 報名連結',url:''},
+  {inst:'TCFST',code:'15W316',name:'AI 世代研發生產力提升：AI 輔助研發實務',cat:'02',type:'star',hours:'4,000\n（園區內2,500）',fee:'研發/技術人員',target:'Zotero文獻管理、Logseq知識花園（日誌/Query術/閃卡）、n8n流程自動化（Line通知機器人）、Antigravity AI IDE智慧開發（Prompt Engineering/自然語言生成Python工具）',outline:'🔗 報名連結',url:''},
+  {inst:'TCFST',code:'15W311',name:'AI Agent 開發實戰（LangChain × RAG）',cat:'02',type:'star',hours:'5,000（園區內2,500；6/7前2,500）',fee:'熟悉Python工程師、MIS/IT',target:'LLM核心概念、LangChain架構（Prompt Template/Chain/Memory/Output Parser）、AI Agent設計（Tool設計/ReAct推理）、RAG基礎（向量資料庫/企業知識Agent）',outline:'🔗 報名連結',url:''},
+  {inst:'TCFST',code:'15W317',name:'AI 世代研發生產力提升：低代碼資料分析與 AI 模型',cat:'02',type:'star',hours:'10,000（會員9,000）',fee:'非資工背景學員',target:'Orange視覺化AI建模（分佈圖/散佈圖/篩選）、資料前處理與決策樹、監督式模型評估（SVM/ROC/AUC）、集群分析/影像辨識/文本探勘（K-Means/情感分析）',outline:'🔗 報名連結',url:''},
+  {inst:'TCFST',code:'15W325',name:'Vibe Coding 與 AI Agent Coding',cat:'02',type:'star',hours:'5,000\n（園區內2,500）',fee:'有程式基礎工程師',target:'Part I Vibe Coding：LLM(ChatGPT/Gemini/Claude)/Local LLM Ollama/Google AntiGravity/OpenCode; Part II AI Agent：Claude-Code/MCP Servers/Skills/Claw Family/OpenClaw安裝實作/Agent OS',outline:'🔗 報名連結',url:''},
+  {inst:'TCFST',code:'15W323',name:'Vibe Coding：從需求設計到 AI 系統上線的工程實作課',cat:'02',type:'star',hours:'竹科補助價',fee:'工程師',target:'從需求分析、Prompt設計到系統上線完整工程化實作流程，強調AI輔助工程實作落地能力',outline:'🔗 報名連結',url:''},
+  {inst:'TCFST',code:'15C321',name:'AI 視覺應用與深度學習（實作）',cat:'03',type:'star',hours:'5,000（園區內2,500）',fee:'軟硬體工程師',target:'AI視覺應用基礎、深度學習模型訓練、卷積神經網路（CNN）、影像分類與辨識實作',outline:'🔗 報名連結',url:''},
+  {inst:'TCFST',code:'15W314',name:'AI 與邊緣運算實戰：NVIDIA 裝置端 AI 模型部署',cat:'03',type:'star',hours:'20,000（園區內16,000）',fee:'硬/軟體工程師',target:'模組一：AI與邊緣運算架構+Jetson Orin Nano Super環境建置; 模組二：Python/OpenCV/TensorFlow Lite; 模組三：手語/手寫數字影像辨識專題實作; 模組四：NVIDIA官方認證考核（可獲NVIDIA官方授權證書）',outline:'🔗 報名連結',url:''},
+  {inst:'TCFST',code:'15W326',name:'多模態生成式 AI 機器人：嵌入式邊緣端開發與智慧代理實戰',cat:'03',type:'star',hours:'5,000（園區內2,500）',fee:'略懂Python/C++工程師',target:'Day1：AMB82-mini開發板、語音合成(Gemini-Audio/Google-TTS)、語音識別(Groq-Whisper)、LLM(Gemini)、感測器與馬達驅動(IMU/DRV8833)、MQTT/HTTPS操控介面; Day2：RPi5/Jetson Orin、本地端語音(Kokoro/Whisper)、Ollama LLM、視覺動作模型(OpenVLA)、AI代理控制(OpenClaw)',outline:'🔗 報名連結',url:''},
+  {inst:'TCFST',code:'15W302',name:'PyTorch 深度學習模型全解析（CNN → Transformer）',cat:'03',type:'star',hours:'5,000（園區內2,000）',fee:'深度學習工程師',target:'Day1：影像分類(AlexNet→ResNet→ViT)+影像分割(FCN→SETR); Day2：2D/3D偵測(YOLO→DETR→PETR)+生成模型(DCGAN→Pix2Pix→Diffusion→Stable Diffusion微調)+VLM(CLIP/BLIP/LLaVA/Gemma)',outline:'🔗 報名連結',url:''},
+  {inst:'TCFST',code:'15W303',name:'生成式影像與多模態 AI：從 Diffusion 到視覺語言模型',cat:'03',type:'star',hours:'竹科補助價',fee:'AI/ML工程師',target:'Diffusion Model原理與應用、視覺語言模型(VLM)架構、多模態AI整合實作、生成式影像技術應用',outline:'🔗 報名連結',url:''},
+  {inst:'TCFST',code:'15W338',name:'深度學習進階設計與優化',cat:'03',type:'star',hours:'5,000（園區內500）',fee:'ML/AI工程師',target:'深度學習理論基礎、模型訓練/測試結果解讀、架構設計優化（損失函數/自注意力機制）、訓練優化（遷移學習/優化演算法）、模型壓縮（剪枝/量化/知識蒸餾/LoRA）',outline:'🔗 報名連結',url:''},
+  {inst:'TCFST',code:'15W339',name:'AI 2026 最新趨勢與企業轉型實戰：從生成式AI到AI Agent的產業應用',cat:'04',type:'star',hours:'2,000（園區內200）',fee:'企業主管/PM/工程師',target:'AI最新發展(GPT→多模態→Agent/小模型vs大模型選型)、AI Agent多代理系統(AutoGen/CrewAI)、企業導入四大架構(LLM+RAG/n8n/Flowise/Agent Orchestration)、產業案例(半導體/製造/ICT客服)、AI轉型三階段策略',outline:'🔗 報名連結',url:''},
+  {inst:'TCFST',code:'15C028',name:'[先修] 生成式 AI 的崛起：必須了解的定義及運作方式',cat:'04',type:'star',hours:'請洽詢',fee:'各職能員工',target:'生成式AI基礎定義、核心運作原理、主流模型介紹（先修入門，建議搭配15C029修習）',outline:'🔗 報名連結',url:''},
+  {inst:'TCFST',code:'15C029',name:'[應用] 生成式 AI 解鎖未來職場應用：培養AI輔助內容開發和專案管理能力',cat:'04',type:'star',hours:'請洽詢',fee:'各職能員工',target:'生成式AI職場應用實務、AI輔助內容開發技巧、AI輔助專案管理工具與流程整合（銜接先修15C028）',outline:'🔗 報名連結',url:''},
+  {inst:'TCFST',code:'15W365',name:'AI 協作全攻略：指令工程與職場效能進化',cat:'04',type:'star',hours:'竹科補助價',fee:'各職能員工',target:'Prompt Engineering實戰技巧、AI協作工作流程設計、職場效能提升工具整合應用',outline:'🔗 報名連結',url:''},
+  {inst:'TCFST',code:'15W366',name:'AI 協作全攻略：編程實戰與跨域開發防禦力',cat:'04',type:'star',hours:'竹科補助價',fee:'工程師',target:'AI輔助程式開發實戰、跨域應用開發技術、AI開發防禦能力（安全性/可靠性）',outline:'🔗 報名連結',url:''},
+  {inst:'TCFST',code:'15C322',name:'ESP32 AIoT 智慧物聯網系統整合實戰',cat:'07',type:'star',hours:'請洽詢',fee:'硬體/IoT工程師',target:'ESP32開發環境建置、AIoT系統架構設計、感測器整合與資料傳輸、AI模型嵌入邊緣裝置、智慧物聯網應用案例實作',outline:'🔗 報名連結',url:''},
+  {inst:'TCFST',code:'15C323',name:'ROS2 系統建置與應用程式設計（實作）',cat:'07',type:'star',hours:'請洽詢',fee:'機器人/系統工程師',target:'ROS2安裝與環境設定、節點(Node)/話題(Topic)通訊機制、服務(Service)/動作(Action)設計、感測器整合與機器人控制、實機應用程式開發實作',outline:'🔗 報名連結',url:''},
+  {inst:'TCFST',code:'15W341',name:'數位孿生與虛擬實境應用於智慧型機器人之訓練',cat:'07',type:'star',hours:'竹科補助價',fee:'系統/機器人工程師',target:'數位孿生(Digital Twin)技術原理、VR環境建構、模擬訓練資料生成、AI機器人仿真訓練流程、Sim-to-Real遷移策略',outline:'🔗 報名連結',url:''},
+  {inst:'TCFST',code:'15I021',name:'AI 與大數據分析在智慧製造與品質改善中的應用（搭配R軟體）',cat:'08',type:'star',hours:'請洽詢',fee:'製造/品質工程師',target:'AI與大數據分析應用、智慧製造品質改善、R軟體實作（部分對應DTD，與DD/Layout有交疊）',outline:'🔗 報名連結',url:''},
+  {inst:'TAICA',code:'課程3',name:'生成式 AI 應用系統與工程\nGenerative AI Application Systems and Engineering',cat:'02',type:'star',hours:'國立成功大學',fee:'莊坤達 Prof. Kun-Ta Chuang',target:'週三 14:00–17:00（鏡像）',outline:'中文',url:'★★★★★★'},
+  {inst:'TAICA',code:'課程2',name:'大型語言模型與資訊安全系統\nApplying LLMs in Cybersecurity Systems',cat:'02',type:'star',hours:'國立臺灣科技大學',fee:'林俊叡 Prof. Jyun-Ruei Lin',target:'週一 9:20–12:20（前1H自修+2H直播，鏡像）',outline:'英文',url:'★★★★★★'},
+  {inst:'TAICA',code:'課程5',name:'深度學習 Deep Learning',cat:'03',type:'star',hours:'國立陽明交通大學',fee:'彭文孝、陳永昇、謝秉均 Prof. Peng / Chen / Hsieh',target:'週四 12:20–15:10，實體期末考6/4（鏡像）',outline:'英文',url:'★★★★★★★★★★'},
+  {inst:'TAICA',code:'課程7',name:'生成式 AI 的人文導論\nIntroducing Generative AI for Humanities',cat:'04',type:'star',hours:'國立臺灣大學',fee:'謝舒凱 Prof. Shu-Kai Hsieh',target:'週五 10:20–13:10（非同步錄影，混成式鏡像+衛星）',outline:'中文',url:'★★'},
+  {inst:'TAICA',code:'課程4',name:'機率與統計\nProbability and Statistics',cat:'04',type:'star',hours:'國立臺灣大學',fee:'葉丙成 Prof. Ping-Cheng Yeh',target:'週四 14:30–17:30 + 週四晚20:00–22:00（鏡像）\n期中4/16；期末6/11',outline:'中文',url:'★★★'},
+  {inst:'TAICA',code:'課程6',name:'人工智慧倫理 AI Ethics\n⭐ 跨全部四大學分學程共同必修',cat:'04',type:'star',hours:'東海大學',fee:'甘偵蓉 Prof. Zhen-Rong Gan',target:'週二 15:20–18:10（混成式鏡像+衛星）',outline:'中文',url:'★'},
+  {inst:'TAICA',code:'課程8',name:'機器導航與探索\nRobotic Navigation and Exploration',cat:'07',type:'star',hours:'國立清華大學',fee:'胡敏君 Prof. Min-Chun Hu',target:'週一 18:30–21:20（衛星課程）',outline:'中文',url:'★★★★★★★★'},
+  {inst:'TAICA',code:'課程1',name:'智慧製造執行系統\nIntelligent Manufacturing Execution Systems（部分對應）',cat:'08',type:'star',hours:'國立成功大學',fee:'陳裕民 Prof. Yuh-Min Chen',target:'週一 14:10–17:00，實體考試4/20、6/22（鏡像）',outline:'中文',url:'★★★★★★'},
+  {inst:'UUU',code:'ANCC-AI',name:'Anthropic Claude Code AI 代理程式設計',cat:'02',type:'star',hours:'7H',fee:'NT$10,000',target:'Claude Code CLI完整操作：CLAUDE.md設定/客製化指令/@指定檔案/快速鍵/Thinking與Planning Mode/中斷與記憶/回溯對話/脈絡管理/GitHub整合/MCP Server擴充功能',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'ANAA-AI',name:'Anthropic Claude AI Agent 自動化實戰課程',cat:'02',type:'star',hours:'請洽詢',fee:'請洽詢',target:'Claude AI Agent完整自動化流程設計、Claude API整合、工作流程自動化實戰、企業場景落地應用',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'AANAI-AI',name:'Angular Agentic Native 下一代AI代理人應用開發實務',cat:'02',type:'star',hours:'請洽詢',fee:'請洽詢',target:'Angular框架下的AI Agent Native開發、AI代理人應用架構設計、下一代前端AI整合實務',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'VCTC-AI',name:'學會 Tailwind CSS 輕鬆搞定 Vibe Coding 版面',cat:'02',type:'star',hours:'請洽詢',fee:'請洽詢',target:'Tailwind CSS核心類別與響應式設計、搭配AI Vibe Coding工作流快速切版、實戰UI元件開發',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'DIFY-AI',name:'零程式碼 AI Agent 開發實戰 — 使用 Dify/n8n',cat:'02',type:'star',hours:'請洽詢',fee:'請洽詢',target:'Dify平台無程式碼AI Agent建構、n8n工作流程整合、RAG知識庫設定、AI對話機器人部署',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'AIDEV-AI',name:'在 Azure 上開發 AI 應用程式與 AI Agent',cat:'02',type:'star',hours:'請洽詢',fee:'請洽詢',target:'Azure AI服務整合、AI Agent on Azure設計、Semantic Kernel/LangChain on Azure、RAG架構、生產環境部署',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'AI-VSDEV',name:'使用 Visual Studio 2022 開發 Azure OpenAI 應用程式',cat:'02',type:'star',hours:'請洽詢',fee:'請洽詢',target:'Azure OpenAI API整合、Prompt Engineering in .NET、RAG實作、VS2022 AI擴充開發、GPT-4模型調用',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'AI-VSCDAI',name:'使用 Visual Studio Code 開發 Azure Open AI 應用程式',cat:'02',type:'star',hours:'請洽詢',fee:'請洽詢',target:'VSCode + Azure OpenAI整合開發、Copilot擴充應用、Azure AI Search/RAG實作',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'GHCOP-AI',name:'使用 GitHub Copilot 提高 Coding 生產力 — 程式設計 AI 詠唱',cat:'02',type:'star',hours:'7H',fee:'請洽詢',target:'GitHub Copilot進階使用技巧、Copilot Chat/CLI/Edits、AI詠唱Prompt策略、跨語言程式碼生成與審查、安全性考量',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'GHACI-AI',name:'AI 賦能的 SDLC 與 DevOps：GitHub Copilot 全流程協作開發實戰',cat:'02',type:'star',hours:'請洽詢',fee:'請洽詢',target:'GitHub Copilot整合完整SDLC（需求→設計→實作→測試→部署）、GitHub Actions CI/CD自動化、AI程式碼審查、安全掃描整合',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'GHACT-AI',name:'GitHub Actions 工作流程自動化',cat:'02',type:'star',hours:'請洽詢',fee:'請洽詢',target:'GitHub Actions YAML語法、CI/CD Pipeline設計、自訂Action開發、矩陣構建策略、環境管理與Secrets保護、AI輔助流程設計',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'AWSGEN-AI',name:'在 AWS 上開發生成式 AI 應用程式',cat:'02',type:'star',hours:'請洽詢',fee:'請洽詢',target:'Amazon Bedrock API、Claude/Titan/Llama模型調用、RAG on AWS(Knowledge Bases)、Agents for Bedrock設計、模型微調與評估',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'AWSGENA-AI',name:'在 AWS 上開發進階的生成式 AI 應用',cat:'02',type:'star',hours:'請洽詢',fee:'請洽詢',target:'Bedrock進階功能、多Agent協作架構、自訂模型部署、生產環境最佳化、Cost管理與監控、安全合規',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'GCANT-AI',name:'AI Agent 開發極速轉型：Google Antigravity 代理指揮官實戰班',cat:'02',type:'star',hours:'請洽詢',fee:'請洽詢',target:'Google Antigravity框架架構、多代理人協作設計、工具調用與MCP整合、企業AI自動化任務落地實戰',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'GCLLM-AI',name:'使用 Google Cloud 開發大語言模型（LLM）應用程式',cat:'02',type:'star',hours:'請洽詢',fee:'請洽詢',target:'Vertex AI Gemini API整合、RAG on GCP(Vertex AI Search)、LangChain on GCP、Agent Builder、模型微調(Fine-tuning)與評估',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'GCPRO-AI',name:'在正式生產環境部署生成式 AI',cat:'02',type:'star',hours:'請洽詢',fee:'請洽詢',target:'Vertex AI生產環境部署、MLOps最佳實踐、模型監控與版本管理、成本優化、A/B測試與流量管理',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'GCAGT-AI',name:'開發具有搜尋與代理功能的 AI 應用程式',cat:'02',type:'star',hours:'請洽詢',fee:'請洽詢',target:'Google Agent Builder、Vertex AI Search整合、RAG進階實作、多輪對話Agent設計、企業知識庫搜尋應用',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'AZML-AI',name:'在 Azure 上運作機器學習與生成式 AI 解決方案',cat:'02',type:'star',hours:'請洽詢',fee:'請洽詢',target:'Azure Machine Learning端到端流程、AutoML、生成式AI解決方案整合、模型訓練/評估/部署、Responsible AI工具',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'AZAI-AI',name:'設計和實作 Azure AI 的解決方案',cat:'02',type:'star',hours:'請洽詢',fee:'請洽詢',target:'Azure AI服務完整設計（Vision/Language/OpenAI/Search）、AI解決方案架構、安全與合規、成本優化',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'BOT-AI',name:'對談機器人與 AI Agent 開發實戰 — 使用 OpenAI API',cat:'02',type:'star',hours:'請洽詢',fee:'請洽詢',target:'OpenAI API進階使用、對話機器人設計模式、Function Calling/Tool Use、RAG整合、AI Agent with LangChain、生產環境部署',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'PYNLP-AI',name:'Python 中文自然語言 NLP 深度學習與大型語言 LLM 專家課程',cat:'02',type:'star',hours:'請洽詢',fee:'請洽詢',target:'BERT/GPT系列中文NLP實作、自訂LLM微調(Fine-tuning)、RAG中文知識庫建置、LangChain中文Agent開發、模型評估與部署',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'DOCK-AI',name:'使用容器化技術（Docker/Kubernetes）建立本地化 LLM 大語言模型',cat:'02',type:'star',hours:'請洽詢',fee:'請洽詢',target:'Docker/K8s部署本地LLM（Ollama/vLLM）、GPU資源管理、模型API服務化、水平擴展與負載均衡、生產環境監控',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'OLLAMA-AI',name:'生成式 AI 之大語言模型 — 以 Ollama 建置本地化 LLM 服務為例',cat:'02',type:'star',hours:'請洽詢',fee:'請洽詢',target:'Ollama安裝與模型管理（Llama3/Mistral/Phi）、本地化LLM API服務建置、前端整合、RAG本地部署、隱私安全考量',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'N8NPRO-AI',name:'n8n 進階班：打造專業級 n8n 自動化方案',cat:'02',type:'star',hours:'請洽詢',fee:'請洽詢',target:'n8n進階節點應用（HTTP/Webhook/JS/資料庫）、複雜工作流設計、錯誤處理與重試機制、API串接實戰、企業級部署方案',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'N8NLLM-AI',name:'n8n × 大語言模型：從辦公室自動化到企業級 AI 部署的全能實戰班',cat:'02',type:'star',hours:'請洽詢',fee:'請洽詢',target:'n8n整合OpenAI/Claude/Gemini API、RAG工作流建置、企業知識庫自動化維護、Slack/Teams/LINE Bot串接、生產環境LLM部署',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'OPENCLAW-AI',name:'OpenClaw 養龍蝦 AI Agent 實戰課程',cat:'02',type:'star',hours:'請洽詢',fee:'請洽詢',target:'OpenClaw多代理人框架架構、Agent工具鏈設計、記憶與狀態管理、複雜任務分解與協作、企業AI自動化場景實戰',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'AZAISQL',name:'AI 與 SQL Server 2025',cat:'02',type:'star',hours:'請洽詢',fee:'請洽詢',target:'SQL Server 2025 AI功能（內建向量搜尋/Azure OpenAI整合/AI查詢優化）、T-SQL AI函數、本地LLM整合、智慧資料庫應用',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'AICV-AI',name:'AI 電腦視覺 OpenCV',cat:'03',type:'star',hours:'請洽詢',fee:'請洽詢',target:'OpenCV進階功能：影像處理/濾波/特徵提取/物件偵測/深度學習模型整合、YOLO/SSD整合實作、即時視覺系統開發',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'PYML-AI',name:'Python 與機器學習深度學習 — 使用 Keras 與 TensorFlow',cat:'03',type:'star',hours:'請洽詢',fee:'請洽詢',target:'TensorFlow/Keras深度學習模型設計（CNN/RNN/LSTM/Transformer）、遷移學習、模型訓練優化、生產環境部署',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'GCVIBE-AI',name:'行政 AI 極速賦能：Google Gemini 3 雲端 Vibe Coding 應用實戰班',cat:'03',type:'star',hours:'請洽詢',fee:'請洽詢',target:'Google Gemini 3多模態API整合、雲端Vibe Coding工作流、AI輔助UI元件生成、快速原型開發與部署',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'PYSK-AI',name:'Python 機器學習 — 使用 Scikit-Learn',cat:'03',type:'star',hours:'請洽詢',fee:'請洽詢',target:'Scikit-Learn進階應用：特徵工程/模型選擇/集成學習(Random Forest/XGBoost)/Pipeline設計/超參數調優/模型部署',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'GENAI-PY',name:'生成式 AI 實戰演練 — 使用 Python 語言',cat:'04',type:'star',hours:'請洽詢',fee:'請洽詢',target:'OpenAI/Claude/Gemini API實戰、Prompt Engineering進階技巧、RAG架構實作、LangChain Agent開發、生成式AI應用部署',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'AITRANS-AI',name:'推動組織中的 AI 轉型',cat:'04',type:'star',hours:'請洽詢',fee:'請洽詢',target:'企業AI轉型策略框架、AI Ready組織建設、變革管理、AI治理與倫理、ROI評估方法、成功案例分析',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'AB730-AI',name:'利用生成式 AI 變革商務工作流程',cat:'04',type:'star',hours:'請洽詢',fee:'請洽詢',target:'Microsoft Copilot整合商務流程、生成式AI在銷售/行銷/客服/HR的應用、工作流自動化設計、效益評估',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'AICOMP-AI',name:'AI 時代必備之職場競爭力',cat:'04',type:'star',hours:'請洽詢',fee:'請洽詢',target:'AI工具深度整合職場工作流、個人AI生產力系統建立、AI輔助決策與分析、職涯發展策略',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'AIPM-AI',name:'AI 協作的專案管理實戰技能',cat:'04',type:'star',hours:'請洽詢',fee:'請洽詢',target:'AI輔助專案規劃、需求分析自動化、風險預測與管理、AI工具整合PM工作流（Jira/Notion/Copilot）、敏捷+AI實戰',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'CAIPM-AI',name:'EC-Council CAIPM AI 專案經理國際認證課程',cat:'04',type:'star',hours:'請洽詢',fee:'請洽詢',target:'EC-Council CAIPM認證全科（AI專案生命週期/AI倫理治理/風險管理/GenAI專案實務）、模擬考題與認證輔導',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'AIREQ-AI',name:'AI 賦能需求實體化：從問題到可驗證成果的實戰工作坊',cat:'04',type:'star',hours:'請洽詢',fee:'請洽詢',target:'AI輔助需求挖掘與分析、用戶故事AI生成與精煉、驗收條件(AC)自動化產出、從模糊需求到可執行規格的全流程實踐',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'AWSAIP-AI',name:'AWS AI Practitioner 認證準備及 AWS App Studio 實作課程',cat:'04',type:'star',hours:'請洽詢',fee:'請洽詢',target:'AWS AI Practitioner認證全科複習（AWS AI/ML服務/GenAI/責任AI）、AWS App Studio低代碼AI應用開發實作、模擬考題',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'SECAI-AI',name:'CompTIA SecAI＋ 國際 AI 資安認證班',cat:'06',type:'star',hours:'請洽詢',fee:'請洽詢',target:'CompTIA SecAI+認證全科：AI系統威脅模型/對抗式攻擊防禦/AI模型安全評估/資料毒化防護/AI系統合規/Zero Trust AI架構',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'COASP-AI',name:'EC-Council COASP AI 資安專家認證課程',cat:'06',type:'star',hours:'請洽詢',fee:'請洽詢',target:'EC-Council COASP認證：AI系統安全架構設計/LLM安全弱點/Prompt Injection防禦/AI模型隱私保護/AI稽核與合規',outline:'🔗 課程連結',url:''},
+  {inst:'UUU',code:'CHATGPT-HACK',name:'掌握 ChatGPT 進行道德駭客攻擊和滲透測試',cat:'06',type:'star',hours:'請洽詢',fee:'請洽詢',target:'AI輔助滲透測試方法論、ChatGPT生成攻擊腳本與分析、漏洞挖掘自動化、社交工程AI應用、防禦對策設計',outline:'🔗 課程連結',url:''},
+  {inst:'PCSchool',code:'PC-SD01',name:'Python AI應用與部署（LLM / RAG / LangChain / CI-CD）',cat:'02',type:'star',hours:'36小時（可企業包班客製）',fee:'請洽企業服務',target:'有Python基礎工程師/ML工程師',outline:'文本處理與Transformer架構、LLM部署與Prompt Engineering、RAG檢索增強生成、LangChain與Agent整合、CI/CD自動化維運、容器化部署',url:''},
+  {inst:'PCSchool',code:'PC-SD02',name:'Microsoft Azure AI 應用實戰營（AI Agent / GenAI / 認證）',cat:'02',type:'star',hours:'36小時（可企業包班客製）',fee:'請洽企業服務',target:'.NET/Python工程師（備考AI-103）',outline:'Azure環境生成式AI應用開發、Azure AI Agent實作、自然語言解決方案、視覺數據AI應用；對應認證：Microsoft Applied Skills + AI-103',url:''},
+  {inst:'PCSchool',code:'PC-DD01',name:'Python影像辨識與智慧製造（OpenCV / YOLO / 深度學習）',cat:'03',type:'star',hours:'36小時（可企業包班客製）',fee:'請洽企業服務',target:'有Python基礎工程師',outline:'OpenCV影像處理、深度學習模型調優、物件偵測(YOLO/ByteTrack)、影像分割(SAM)、人體特徵辨識(MediaPipe/OCR)、模型部署',url:''},
+  {inst:'PCSchool',code:'PC-DD02',name:'Python商業分析決策（資料科學 / 機器學習 / EDA）',cat:'03',type:'star',hours:'36小時（可企業包班客製）',fee:'請洽企業服務',target:'資料分析師/研發工程師',outline:'NumPy/Pandas/SQL資料處理、探索性資料分析(EDA)、統計分析與A/B Test、機器學習模型(回歸/分類/Pipeline)、資料敘事',url:''},
+  {inst:'PCSchool',code:'PC-GN01',name:'生成式AI職場應用進階班（企業客製版）',cat:'04',type:'star',hours:'依需求規劃',fee:'請洽企業服務',target:'各職能員工/主管',outline:'ChatGPT/Gemini/Copilot進階Prompt策略、AI輔助文件/報告/簡報製作、Microsoft 365 Copilot企業應用、數據分析AI輔助',url:''},
+  {inst:'PCSchool',code:'PC-GN02',name:'AI時代企業數位轉型實戰工作坊',cat:'04',type:'star',hours:'半日～1日（可客製）',fee:'請洽企業服務',target:'企業主管/HR/PM',outline:'企業AI導入路徑規劃、AI工具選型評估、部門AI應用場景設計、政府補助申請輔助',url:''},
+  {inst:'TibaMe',code:'TB-SD01',name:'生成式AI與LLM工程師培訓學程（RAG / Agent / MLOps）',cat:'02',type:'star',hours:'客製化（建議120H+）',fee:'請洽企業服務',target:'Python工程師/資料工程師',outline:'LLM應用架構、RAG系統建置(LlamaIndex/LangChain)、AI Agent開發、Prompt Engineering進階、MLOps部署(Docker/K8s/FastAPI)、企業AI知識庫系統實作',url:'→ 企業服務頁（洽詢企業包班/課程規劃）'},
+  {inst:'TibaMe',code:'TB-SD02',name:'AI應用工程師養成班（Python / ETL / 機器學習 / 深度學習）',cat:'02',type:'star',hours:'300小時（16週）',fee:'政府補助80-100%（符合資格）',target:'AI轉職者/工程師',outline:'資料爬蟲與洗滌、統計與機器學習、深度學習(CNN/RNN)、影像識別與文字識別、資料視覺化、16週就業導向培訓、團隊專題開發',url:'→ AI工程師就業培訓班介紹頁'},
+  {inst:'TibaMe',code:'TB-DD01',name:'Python深度學習實戰課程（真人直播 / 企業客製）',cat:'03',type:'star',hours:'依班次（每期約6小時）',fee:'請洽企業服務',target:'ML/AI工程師（有Python基礎）',outline:'TensorFlow/PyTorch深度學習模型(CNN/RNN/LSTM/Transformer)、遷移學習、影像辨識/NLP任務、模型訓練優化與生產環境部署',url:'→ AI課程總覽頁（搜尋課程名稱）'},
+  {inst:'TibaMe',code:'TB-DD02',name:'NVIDIA DLI 官方認證課程（深度學習 / 電腦視覺 / NLP）',cat:'03',type:'star',hours:'依模組（建議半日/全日起）',fee:'企業內訓官方報價',target:'工程師（需有機器學習基礎）',outline:'深度學習基礎、電腦視覺應用(影像分類/物件偵測)、自然語言處理(BERT/Transformer)、加速計算(CUDA)、Edge AI部署(Jetson)——完課可獲NVIDIA DLI官方數位認證徽章',url:'→ 企業服務頁（洽詢企業包班/課程規劃）'},
+  {inst:'TibaMe',code:'TB-GN01',name:'AI數位轉型企業培訓（高管 / 主管客製課程）',cat:'04',type:'star',hours:'客製化（3H～多日）',fee:'請洽企業服務',target:'企業主管/HR/PM',outline:'AI工具應用與職場效能、部門AI導入策略規劃、Copilot/ChatGPT企業整合、AI培訓計畫設計、組織AI Ready能力建設',url:'→ 企業服務頁（洽詢企業包班/課程規劃）'},
+  {inst:'TibaMe',code:'TB-GN02',name:'AI資料科學家全方位學程（Python / ML / 深度學習 / NLP）',cat:'04',type:'star',hours:'18週（80H+）',fee:'請洽企業服務',target:'資料工程師/分析師（有程式基礎）',outline:'Python資料處理(Pandas/NumPy)、機器學習(Scikit-Learn)、深度學習(TensorFlow/PyTorch)、影像辨識、文字探勘NLP、資料視覺化、9項專案實作',url:'→ AI資料科學家全方位學程頁'},
+  {inst:'TibaMe',code:'TB-SH01',name:'AI技術應用工程師培訓（AIoT / 嵌入式AI / Edge AI）',cat:'07',type:'star',hours:'客製化',fee:'請洽企業服務',target:'硬體/嵌入式工程師',outline:'IoT平台整合、邊緣AI部署(Raspberry Pi/Jetson)、Edge AI模型壓縮優化、AIoT系統架構設計、智慧感測應用實作',url:'→ 企業服務頁（洽詢企業包班/課程規劃）'},
+  {inst:'III',code:'III-SD01',name:'生成式AI與LLM應用開發實作班（RAG / Prompt Engineering / Agent）',cat:'02',type:'star',hours:'21小時（3天）',fee:'請洽課程報名',target:'Python工程師/AI開發人員',outline:'LLM基礎架構與主流模型比較（GPT/Gemini/Claude/Llama）、Prompt Engineering設計策略與進階技巧、RAG架構設計與向量知識庫建置、AI Agent工具鏈整合(LangChain/LlamaIndex)、企業AI系統開發完整實作',url:'🔗 點此查詢課程\n📌 進入課程總覽頁後，搜尋「生成式AI」或「LLM」篩選最新班次'},
+  {inst:'III',code:'III-SD02',name:'生成式AI能力認證 官方備考培訓班（資策會授權講師授課）',cat:'02',type:'star',hours:'14小時（2天）',fee:'請洽課程報名',target:'各職能員工/工程師（備考資策會生成式AI能力認證）',outline:'生成式AI基礎知識（AIGC原理/LLM架構/GAN/Diffusion Model）、Prompt Engineering與模型優化、RAG技術原理概念、AI倫理法規（EU AI Act/台灣AI倫理指南/GDPR）、能力認證重點解析與完整模擬試題練習',url:'🔗 點此查詢課程\n📌 認證考試報名及相關備考課程查詢'},
+  {inst:'III',code:'III-SD03',name:'Python機器學習進階班（Scikit-Learn / 特徵工程 / 模型評估部署）',cat:'02',type:'star',hours:'21小時（3天）',fee:'請洽課程報名',target:'有Python基礎的工程師/資料分析師',outline:'Scikit-Learn進階應用與Pipeline設計、特徵工程與選取策略、監督/非監督學習模型(SVM/Random Forest/XGBoost/K-Means)、模型評估(ROC/AUC/Confusion Matrix/交叉驗證)、超參數調優、生產環境模型部署',url:'🔗 點此查詢課程\n📌 點入後可查詢Python機器學習課程最新開班資訊'},
+  {inst:'III',code:'III-DD01',name:'深度學習與神經網路實務班（TensorFlow / PyTorch / CNN / Transformer）',cat:'03',type:'star',hours:'21~30小時',fee:'請洽課程報名',target:'ML/AI工程師（有機器學習基礎）',outline:'神經網路基礎與反向傳播原理、CNN/RNN/LSTM/Transformer架構詳解、TensorFlow 2.x/PyTorch實作訓練、遷移學習與Fine-tuning、模型訓練優化（正則化/Dropout/BatchNorm/學習率調整）、生產環境部署（ONNX/TensorRT）',url:'🔗 點此查詢課程\n📌 進入課程總覽頁後，搜尋「深度學習」篩選最新班次'},
+  {inst:'III',code:'III-DD02',name:'人工智慧深度強化學習實作班（Deep RL / 智慧系統設計）',cat:'03',type:'star',hours:'21小時（3天）',fee:'請洽課程報名',target:'AI研究人員/工程師（有深度學習基礎）',outline:'深度強化學習理論(Q-Learning/Policy Gradient/PPO/Actor-Critic)、代表性DRL案例(AlphaGo/OpenAI Gym/MuJoCo)、Deep RL系統設計方法、線上學習與策略解析、具備線上學習及策略解析功能的智慧型系統設計實作',url:'🔗 點此查詢課程\n📌 直連深度強化學習課程介紹頁'},
+  {inst:'III',code:'III-DD03',name:'AI影像智慧應用工程師養成班（就業培訓班）',cat:'03',type:'star',hours:'300~600小時（政府補助）',fee:'政府補助80-100%（符合資格）',target:'AI轉職者/工程師（有程式基礎）',outline:'Python進階、深度學習全套(CNN/物件偵測YOLO/影像分割)、LLM圖片理解技術(VLM)、電腦視覺實務應用（影像品檢/醫療影像判讀/智慧零售）、團隊專題開發（含就業媒合/履歷面試輔導）',url:'🔗 點此查詢課程\n📌 進入課程總覽頁後，搜尋「影像」或「就業養成」篩選最新班次'},
+  {inst:'III',code:'III-GN01',name:'人工智慧經理人培訓班（主管決策者快速體驗課）',cat:'04',type:'star',hours:'14小時（2天）',fee:'請洽課程報名',target:'企業主管/PM/決策者',outline:'AI關鍵技術快速全覽（ML/DL/LLM/生成式AI實際體驗）、各領域AI開發重點與案例（醫療/金融/製造/服務業）、AI專案規劃與投資效益評估方法、AI治理倫理與法規風險、帶回可執行AI導入計畫藍圖',url:'🔗 點此查詢課程\n📌 直連人工智慧經理人培訓班介紹頁（含課程大綱與報名）'},
+  {inst:'III',code:'III-GN02',name:'生成式AI能力認證考試（資策會官方認證／教育部學習歷程登錄）',cat:'04',type:'star',hours:'線上考試（90分鐘）',fee:'NT$1,300（含稅）',target:'各職能員工/工程師（無需程式背景，所有人適合）',outline:'四大評測面向：①生成式AI基礎知識（AIGC原理/LLM架構/各式生成工具）②能力強化（Prompt設計/模型優化/指導性文本輸入）③應用技能（文字/圖像/影音/程式碼生成工具應用）④倫理法律（歐盟AI法案/台灣AI倫理指南/著作權/隱私保護）；認證效期2年，可登錄公務人員終身學習護照',url:'🔗 點此查詢課程\n📌 直連資策會數位教育研究所認證報名頁'},
+  {inst:'III',code:'III-GN03',name:'AI人工智慧拼資安升級實作班（AI系統資安防護實務）',cat:'04',type:'star',hours:'14小時（2天）',fee:'請洽課程報名',target:'資安工程師/IT管理者（有資安基礎）',outline:'AI應用資安威脅模型建立（IoT智慧裝置/自動駕駛/機器人智慧製造）、對抗式攻擊類型與防禦策略、AI模型安全評估方法論、隱私保護設計（聯邦學習/差分隱私概念）、組織AI資安合規框架建置與實作演練',url:'🔗 點此查詢課程\n📌 直連AI資安課程介紹頁（含課程大綱與報名）'},
+  {inst:'III',code:'III-DV01',name:'AI人工智慧資訊安全實務（IoT / 自動駕駛 / 智慧製造安全）',cat:'06',type:'star',hours:'14小時（2天）',fee:'請洽課程報名',target:'資安工程師/DV驗證工程師',outline:'AI應用個案資安分析（物聯網設備安全漏洞/自動駕駛AI決策攻擊/工業機器人智慧製造資安）、AI系統攻擊面向分析與防禦策略、AI安全評估工具與方法、資安因應措施實作演練',url:'🔗 點此查詢課程\n📌 直連AI資安課程介紹頁'},
+  {inst:'III',code:'III-SH01',name:'AIoT物聯網智慧創新應用就業養成班（Raspberry Pi / OpenCV / TensorFlow）',cat:'07',type:'star',hours:'600小時（政府補助）',fee:'政府補助80-100%（符合資格）',target:'IoT/嵌入式工程師/AI轉職者（有程式基礎）',outline:'Raspberry Pi AIoT平台建置、Python+Java機器學習與OpenCV影像辨識應用、Node.js+MongoDB物聯網後端開發、TensorFlow深度學習(CNN/物件偵測)、IoT智慧應用專題(智慧家居/農業/工業IoT)、就業媒合活動',url:'🔗 點此查詢課程\n📌 進入課程總覽頁後，搜尋「AIoT」或「物聯網」篩選最新班次'},
+  {inst:'III',code:'III-DT01',name:'AI人工智慧創新應用就業養成班（Python / ML / TensorFlow / 就業導向）',cat:'08',type:'star',hours:'300~600小時（政府補助）',fee:'政府補助80-100%（符合資格）',target:'AI轉職者（有程式基礎者）',outline:'物件導向Python程式設計、資料分析處理（Pandas/NumPy）、機器學習（Scikit-Learn全流程）、深度學習（TensorFlow）、智慧應用實作（對話式AI/影像辨識/NLP）、Web應用整合、期末專題製作與就業媒合',url:'🔗 點此查詢課程\n📌 直連AI人工智慧創新應用就業養成班介紹頁'},
+  {inst:'WDA',code:'WDA-SD01',name:'生成式AI與大型語言模型進階應用',cat:'02',type:'ext',hours:'21小時',fee:'個人負擔20%（政府補助80%）',target:'工程師/PM/各職能',outline:'LLM核心技術深化、Prompt Engineering進階實戰、RAG架構實作、Fine-tuning概念、AI應用系統開發實戰',url:'https://course.taiwanjobs.gov.tw/course/search-training'},
+  {inst:'WDA',code:'WDA-SD02',name:'AI Agent 實務應用與自動化流程設計',cat:'02',type:'ext',hours:'21小時',fee:'個人負擔20%（政府補助80%）',target:'工程師/IT/MIS',outline:'AI Agent設計原理、LangChain/AutoGen框架應用、工作流自動化、RAG知識庫整合、企業AI助理實作',url:'https://course.taiwanjobs.gov.tw/course/search-training'},
+  {inst:'WDA',code:'WDA-SD03',name:'Python程式設計與AI應用開發進階班',cat:'02',type:'ext',hours:'30小時',fee:'個人負擔20%（政府補助80%）',target:'有Python基礎工程師',outline:'Python進階語法、NumPy/Pandas資料處理、API串接實作、OpenAI/Claude API整合、AI應用專案實戰',url:'https://course.taiwanjobs.gov.tw/course/search-training'},
+  {inst:'AIA',code:'AIA-SD01',name:'大型語言模型實作初階班（LLM / 自動化流程 / RAG入門）',cat:'02',type:'ext',hours:'21小時（3天）實體',fee:'NT$17,000（校友/團報NT$15,300）',target:'對LLM有興趣的上班族/IT新手（無需程式背景）',outline:'LLM基礎知識與ChatGPT提問技術、Make自動化流程應用（工作流程串接/工作模板/外部工具整合）、建立聊天機器人、多模態語言模型應用入門；含專題成果分享與AIATCL™素養認證',url:'https://aiacademy.tw'},
+  {inst:'AIA',code:'AIA-SD02',name:'大型語言模型實作中階班（RAG / Fine-tuning）',cat:'02',type:'ext',hours:'請洽招生簡章',fee:'請洽招生簡章',target:'有LLM基礎的工程師/資料科學家',outline:'RAG（檢索增強生成）實作與向量資料庫建置、Fine-tuning（模型微調）技術實作、企業級聊天機器人開發、LLM模型理論知識與架構深度解析',url:'https://aiacademy.tw'},
+  {inst:'AIA',code:'AIA-SD03',name:'大型語言模型實作高階班（Agent / 生產環境部署）',cat:'02',type:'ext',hours:'請洽招生簡章',fee:'請洽招生簡章',target:'Python工程師/ML工程師（需有LLM基礎）',outline:'AI Agent設計與Multi-Agent協作、地端RAG/知識庫串接資料庫、LLM Fine-tuning(LoRA/SFT)、生產環境部署與優化、專題實作與成果發表',url:'https://aiacademy.tw'},
+  {inst:'AIA',code:'AIA-SD04',name:'NLP 專題實作班（自然語言處理 / 深度學習應用）',cat:'02',type:'ext',hours:'請洽招生簡章',fee:'請洽招生簡章',target:'有Python/ML基礎的工程師',outline:'NLP核心技術深化（文字分類/情感分析/命名實體識別）、Transformer/BERT/GPT應用、RAG與向量搜尋整合、NLP專題設計與實作發表',url:'https://aiacademy.tw'},
+  {inst:'WDA',code:'WDA-DD01',name:'Python機器學習與深度學習實務班',cat:'03',type:'ext',hours:'30小時',fee:'個人負擔20%（政府補助80%）',target:'有Python基礎工程師',outline:'Scikit-Learn機器學習全流程、TensorFlow/Keras深度學習(CNN/RNN)、影像辨識、模型訓練/評估/部署',url:'https://course.taiwanjobs.gov.tw/course/search-training'},
+  {inst:'WDA',code:'WDA-DD02',name:'電腦視覺與影像辨識AI應用實作',cat:'03',type:'ext',hours:'21小時',fee:'個人負擔20%（政府補助80%）',target:'軟硬體工程師',outline:'OpenCV影像處理基礎、物件偵測（YOLO/SSD）、人臉辨識、智慧製造視覺品檢、模型部署實作',url:'https://course.taiwanjobs.gov.tw/course/search-training'},
+  {inst:'AIA',code:'AIA-DD01',name:'Edge AI 班（邊緣運算AI / 嵌入式模型部署）',cat:'03',type:'ext',hours:'請洽招生簡章',fee:'請洽招生簡章',target:'硬體/嵌入式/系統工程師（有Python基礎）',outline:'Edge AI部署架構設計、模型壓縮與量化技術（Pruning/Quantization/Knowledge Distillation）、嵌入式裝置AI部署（Jetson/Raspberry Pi）、邊緣推論優化與實作',url:'https://aiacademy.tw'},
+  {inst:'AIA',code:'AIA-DD02',name:'技術領袖班（ML/DL進階 / AI系統架構）',cat:'03',type:'ext',hours:'請洽招生簡章',fee:'請洽招生簡章',target:'資深AI/ML工程師、研究人員（需有深度學習基礎）',outline:'ML/DL前沿技術深化、AI系統架構設計最佳實務、大規模模型訓練、業界AI專案Case Study、與業界技術領袖交流',url:'https://aiacademy.tw'},
+  {inst:'WDA',code:'WDA-GN01',name:'AI數位素養與職場應用進階班',cat:'04',type:'ext',hours:'18小時',fee:'個人負擔20%（政府補助80%）',target:'各職能在職員工',outline:'ChatGPT/Gemini/Claude進階應用與Prompt Engineering、AI輔助文件撰寫、職場AI工具整合',url:'https://course.taiwanjobs.gov.tw/course/search-training'},
+  {inst:'WDA',code:'WDA-GN02',name:'企業AI轉型與智慧營運實務',cat:'04',type:'ext',hours:'18小時',fee:'個人負擔20%（政府補助80%）',target:'企業主管/PM/HR',outline:'AI轉型策略規劃、AI工具選型評估、智慧客服AI應用、AI導入ROI評估、數位轉型案例分析',url:'https://course.taiwanjobs.gov.tw/course/search-training'},
+  {inst:'AIA',code:'AIA-GN01',name:'GenAI 素養認證實作班（含AIATCL™認證）',cat:'04',type:'ext',hours:'45.5小時（7天）實體',fee:'NT$45,000（校友/團報NT$40,000）',target:'企業管理者/行銷/客服/AI初學者（無需程式背景）',outline:'生成式AI素養培育（LLM原理/圖像/音樂生成）、ChatGPT Prompt技術、Make自動化流程、產業應用、GenAI應用創新競賽；可獲AIA人才認證AIATCL™',url:'https://aiacademy.tw'},
+  {inst:'AIA',code:'AIA-GN02',name:'經理人班（AI策略 / 數位轉型 / 高管決策）',cat:'04',type:'ext',hours:'請洽招生簡章',fee:'請洽招生簡章',target:'企業主管/CXO/數位長（CDO）/決策者',outline:'AI策略規劃與企業數位轉型路徑、主流AI技術全覽（ML/DL/LLM）與業務場景對應、AI投資ROI評估、AI治理與倫理風險、跨產業AI落地案例研討',url:'https://aiacademy.tw'},
+  {inst:'AIA',code:'AIA-GN03',name:'經理人 AIPM 班（AI專案管理 / 從策略到執行）',cat:'04',type:'ext',hours:'請洽招生簡章',fee:'請洽招生簡章',target:'企業主管/PM/產品負責人（有AI基礎）',outline:'AI專案規劃與推進方法論、AI需求分析與可行性評估、AI開發流程管理、跨部門AI協作模式、AI專案風險管理與效益追蹤',url:'https://aiacademy.tw'},
+  {inst:'WDA',code:'WDA-DT01',name:'AI智慧製造與品質管理實務',cat:'08',type:'ext',hours:'21小時',fee:'個人負擔20%（政府補助80%）',target:'製造/品質/IE工程師',outline:'AI於製造業應用（預測維護/品質檢測/生產排程優化）、工業數據分析技術、智慧工廠架構設計',url:'https://course.taiwanjobs.gov.tw/course/search-training'},
+  {inst:'AIA',code:'AIA-DT01',name:'產業 AI 專班（製造業 / 半導體 / ICT應用）',cat:'08',type:'ext',hours:'請洽招生簡章',fee:'請洽招生簡章',target:'製造/半導體/ICT研發工程師',outline:'AI應用於製造業全流程（預測維護/品質檢測/產能優化）、半導體製程AI應用、工業數據分析實作、智慧工廠AI架構設計、業界導入案例研討（含竹科企業）',url:'https://aiacademy.tw'}
 ];
 
 let courses = [];
@@ -910,10 +1044,34 @@ function renderInst(){
   const extEl=document.getElementById('inst-grid-ext');
   starEl.innerHTML=''; extEl.innerHTML='';
   INST_DATA.forEach(inst=>{
-    const n=courses.filter(c=>c.inst===inst.id).length;
-    const cats=[...new Set(courses.filter(c=>c.inst===inst.id).map(c=>c.cat))];
+    const instCourses=courses.filter(c=>c.inst===inst.id);
+    const n=instCourses.length;
+    const cats=[...new Set(instCourses.map(c=>c.cat))];
     const card=document.createElement('div');
     card.className='inst-card'+(inst.type==='ext'?' internal-only':'');
+
+    // Build course list grouped by category
+    const bycat={};
+    instCourses.forEach(c=>{
+      if(!bycat[c.cat]) bycat[c.cat]=[];
+      bycat[c.cat].push(c);
+    });
+    const courseListHTML=Object.keys(bycat).sort().map(catId=>{
+      const C=getCat(catId);
+      const items=bycat[catId].map(c=>{
+        const ci=courses.indexOf(c);
+        return `<div class="inst-course-item" onclick="event.stopPropagation();openDetail(${ci})">
+          <span class="inst-course-code">${c.code||'—'}</span>
+          <span class="inst-course-name">${c.name}</span>
+          <span class="cat-tag" style="background:${C.bg};color:${C.color};font-size:9px;flex-shrink:0">${C.short}</span>
+        </div>`;
+      }).join('');
+      return `<div style="margin-bottom:8px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:${C.color};margin-bottom:4px">${C.id} ${C.full.substring(0,28)}</div>
+        ${items}
+      </div>`;
+    }).join('');
+
     card.innerHTML=`
       <div class="inst-header">
         <div style="display:flex;align-items:center;gap:10px;flex:1">
@@ -931,7 +1089,21 @@ function renderInst(){
         <div class="inst-stat"><div class="inst-stat-n">${n}</div><div class="inst-stat-l">課程數</div></div>
         <div class="inst-stat"><div class="inst-stat-n">${cats.length}</div><div class="inst-stat-l">類別數</div></div>
       </div>
-      <div class="inst-url"><a href="${inst.url}" target="_blank" style="font-size:11px;color:var(--accent)">🔗 ${inst.url}</a></div>`;
+      <div class="inst-url"><a href="${inst.url}" target="_blank" style="font-size:11px;color:var(--accent)" onclick="event.stopPropagation()">🔗 ${inst.url}</a></div>
+      ${n>0?`<button class="inst-toggle-btn" id="toggle-${inst.id}">▼ 展開查看 ${n} 門課程</button>
+      <div class="inst-course-list" id="course-list-${inst.id}">${courseListHTML}</div>`:''}`;
+
+    // Toggle expand/collapse on card click
+    card.addEventListener('click', ()=>{
+      if(!n) return;
+      const listEl=document.getElementById('course-list-'+inst.id);
+      const btnEl=document.getElementById('toggle-'+inst.id);
+      const isOpen=listEl.classList.contains('open');
+      listEl.classList.toggle('open');
+      card.classList.toggle('inst-card-expanded', !isOpen);
+      btnEl.textContent=isOpen?`▼ 展開查看 ${n} 門課程`:`▲ 收合課程清單`;
+    });
+
     (inst.type==='star'?starEl:extEl).appendChild(card);
   });
 }
@@ -1071,6 +1243,7 @@ function showPage(id){
   }
   if(id==='addinst') renderInstListManage();
   if(id==='airefresh') buildRefreshOptions();
+  if(id==='autorefresh') initAutoRefreshPage();
 }
 
 /* ── XLSX EXPORT ── */
@@ -1482,6 +1655,210 @@ function closeDetail(){
   document.getElementById('detail-overlay').style.display='none';
   document.getElementById('detail-drawer').style.display='none';
 }
+
+/* ══════════════════════════════════════════════════════════
+   AUTO REFRESH  —  one-click course update via web_search
+   ══════════════════════════════════════════════════════════ */
+let arAllSuggested = [];
+
+function initAutoRefreshPage() {
+  const wrap = document.getElementById('refresh-inst-checklist');
+  if (!wrap || wrap.children.length > 0) return;
+  INST_DATA.forEach(inst => {
+    const card = document.createElement('label');
+    card.style.cssText = 'display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;background:var(--surface);font-size:12px;transition:all .15s';
+    card.innerHTML = `
+      <input type="checkbox" class="ar-inst-cb" value="${inst.id}" checked style="width:14px;height:14px;cursor:pointer">
+      <div style="width:26px;height:26px;border-radius:6px;background:${inst.iconBg}22;color:${inst.iconBg};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">${inst.icon}</div>
+      <div style="min-width:0">
+        <div style="font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${inst.id}</div>
+        <div style="font-size:10px;color:var(--text3)">${courses.filter(c=>c.inst===inst.id).length} 門課</div>
+      </div>`;
+    card.onmouseenter = () => card.style.borderColor = 'var(--accent)';
+    card.onmouseleave = () => card.style.borderColor = 'var(--border)';
+    wrap.appendChild(card);
+  });
+}
+
+function toggleAllInsts(val) {
+  document.querySelectorAll('.ar-inst-cb').forEach(cb => cb.checked = val);
+}
+
+async function startAutoRefresh() {
+  const selected = [...document.querySelectorAll('.ar-inst-cb:checked')].map(cb => cb.value);
+  if (!selected.length) { alert('請至少選擇一個機構'); return; }
+
+  const btn = document.getElementById('auto-refresh-btn');
+  btn.disabled = true; btn.textContent = '⏳ 刷新中…';
+
+  const progressWrap = document.getElementById('ar-progress-wrap');
+  const progressList = document.getElementById('ar-progress-list');
+  const progressBar  = document.getElementById('ar-progress-bar');
+  progressWrap.style.display = 'block';
+  progressList.innerHTML = '';
+  document.getElementById('ar-results-wrap').style.display = 'none';
+  arAllSuggested = [];
+
+  // Build progress rows
+  const progressItems = {};
+  selected.forEach(id => {
+    const inst = getInst(id);
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;font-size:12px;padding:6px 0';
+    row.innerHTML = `
+      <span id="ar-status-${id}" style="font-size:14px">⏳</span>
+      <span style="font-weight:600;color:var(--text);width:90px;flex-shrink:0">${id}</span>
+      <span id="ar-msg-${id}" style="color:var(--text3)">等待中…</span>`;
+    progressList.appendChild(row);
+    progressItems[id] = row;
+  });
+
+  let done = 0;
+  const updateBar = () => {
+    progressBar.style.width = Math.round((done / selected.length) * 100) + '%';
+  };
+  updateBar();
+
+  // Refresh each institution sequentially
+  for (const instId of selected) {
+    const inst = getInst(instId);
+    const statusEl = document.getElementById('ar-status-' + instId);
+    const msgEl    = document.getElementById('ar-msg-' + instId);
+    statusEl.textContent = '🔄';
+    msgEl.textContent = '搜尋中…';
+
+    const existing = courses.filter(c => c.inst === instId).map(c => `${c.code} ${c.name}`).join('、');
+    const catSummary = CATEGORIES.filter(c => !['01','05'].includes(c.id))
+      .map(c => `${c.id} ${c.short}`).join('、');
+
+    const prompt = `你是 Realtek 研發創新學院課程規劃顧問。請用 web_search 工具搜尋「${inst.name}」（${inst.url}）目前最新的 AI 相關課程，特別針對以下類別：${catSummary}。
+
+現有課程（請勿重複建議）：${existing || '（尚無）'}
+
+搜尋步驟：
+1. 搜尋「${inst.name} AI 課程 2025 2026」
+2. 搜尋「${inst.id} 生成式AI LLM 深度學習 課程」
+3. 若有具體課程頁面，進一步搜尋取得詳細資訊
+
+找到課程後，只回傳以下 JSON 陣列（不要任何 markdown 或說明文字）：
+[{"code":"${instId}-XX01","name":"課程名稱","cat":"02","type":"${inst.type}","hours":"時數","fee":"費用","target":"適合對象","outline":"大綱摘要50~80字","url":"課程URL"}]
+
+若搜尋後確認沒有新課程，回傳空陣列：[]`;
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'refresh',
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 2000,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+
+      // Extract final text block (after tool use)
+      const textBlocks = (data.content || []).filter(b => b.type === 'text');
+      const rawText = textBlocks.map(b => b.text).join('').replace(/```json?|```/g,'').trim();
+
+      // Find JSON array in response
+      const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) throw new Error('回應中找不到 JSON 陣列');
+
+      const suggestions = JSON.parse(jsonMatch[0]).map(c => ({ ...c, inst: instId }));
+      const newOnes = suggestions.filter(s =>
+        !courses.some(x => x.inst === instId && (x.code === s.code || x.name === s.name))
+      );
+
+      arAllSuggested.push(...newOnes);
+      statusEl.textContent = newOnes.length > 0 ? '✅' : '➖';
+      msgEl.textContent = newOnes.length > 0
+        ? `找到 ${newOnes.length} 門新課程`
+        : '無新課程（已是最新）';
+      msgEl.style.color = newOnes.length > 0 ? 'var(--green)' : 'var(--text3)';
+
+    } catch (e) {
+      statusEl.textContent = '❌';
+      msgEl.textContent = '錯誤：' + e.message;
+      msgEl.style.color = 'var(--red)';
+    }
+
+    done++;
+    updateBar();
+    // Small delay between requests
+    if (done < selected.length) await new Promise(r => setTimeout(r, 1000));
+  }
+
+  btn.disabled = false; btn.textContent = '🔄 開始刷新所有機構';
+
+  if (arAllSuggested.length === 0) {
+    document.getElementById('ar-results-wrap').style.display = 'none';
+    // Show summary in progress area
+    const sumRow = document.createElement('div');
+    sumRow.style.cssText = 'margin-top:10px;padding:10px 14px;background:var(--green-lt);border-radius:var(--radius);font-size:12px;color:var(--green);border:1px solid var(--green)';
+    sumRow.textContent = '✅ 所有機構課程均已是最新狀態，無需更新。';
+    progressList.appendChild(sumRow);
+    return;
+  }
+
+  renderArResults();
+}
+
+function renderArResults() {
+  const wrap = document.getElementById('ar-results-list');
+  wrap.innerHTML = arAllSuggested.map((c, i) => {
+    const cat = getCat(c.cat);
+    const inst = getInst(c.inst);
+    return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <input type="checkbox" class="ar-result-cb" data-idx="${i}" checked style="margin-top:3px;width:15px;height:15px;flex-shrink:0;cursor:pointer">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+            <span style="font-size:11px;font-weight:700;color:${inst.iconBg}">${inst.id}</span>
+            <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">${c.code}</span>
+            <span class="cat-tag" style="background:${cat.bg};color:${cat.color};font-size:10px">${cat.id} ${cat.short}</span>
+            <span class="tag ${c.type==='star'?'tag-star':'tag-ext'}" style="font-size:10px">${c.type==='star'?'★ 可內訓':'外訓'}</span>
+          </div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">${c.name}</div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:6px">${c.outline||'—'}</div>
+          <div style="display:flex;gap:12px;font-size:11px;color:var(--text3)">
+            <span>⏱ ${c.hours||'—'}</span>
+            <span>💰 ${c.fee||'—'}</span>
+            <span>👤 ${(c.target||'—').substring(0,30)}</span>
+          </div>
+          ${c.url?`<div style="margin-top:6px"><a href="${c.url}" target="_blank" style="font-size:10px;color:var(--accent)">🔗 ${c.url.substring(0,60)}${c.url.length>60?'…':''}</a></div>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('ar-results-wrap').style.display = 'block';
+}
+
+function arSelectAll(val) {
+  document.querySelectorAll('.ar-result-cb').forEach(cb => cb.checked = val);
+}
+
+function arImportSelected() {
+  const checked = [...document.querySelectorAll('.ar-result-cb:checked')];
+  let added = 0;
+  checked.forEach(cb => {
+    const c = { ...arAllSuggested[+cb.dataset.idx] };
+    if (!courses.some(x => x.inst === c.inst && x.name === c.name)) {
+      courses.push(c); added++;
+    }
+  });
+  if (!added) { alert('沒有選取課程，或選取課程已存在'); return; }
+  saveData(); buildInstChips();
+  const toast = document.getElementById('ar-import-toast');
+  toast.textContent = `✅ 成功匯入 ${added} 門課程！可至「課程清單」查看。`;
+  toast.style.display = 'block';
+  setTimeout(() => toast.style.display = 'none', 5000);
+  renderArResults();
+}
+/* ═══════════════════════════════════════════════════════ */
 
 function init(){
   loadCustomInsts(); loadData(); buildInstChips(); buildCatSelect(); buildModalOptions(); renderAll();

@@ -42,6 +42,7 @@ a:hover{text-decoration:underline}
 .main{padding:0;overflow-x:hidden}
 .page{display:none;animation:fadeIn .2s ease}
 .page.active{display:block}
+@keyframes slideIn{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 
 /* Top bar */
@@ -201,6 +202,18 @@ textarea.form-input{resize:vertical;min-height:70px;line-height:1.5}
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       更新課程來源
     </button>
+    <button class="nav-item" onclick="showPage('health')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      連結健康偵測
+    </button>
+    <button class="nav-item" onclick="showPage('addinst')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><line x1="12" y1="10" x2="12" y2="16"/><line x1="9" y1="13" x2="15" y2="13"/></svg>
+      新增機構
+    </button>
+    <button class="nav-item" onclick="showPage('airefresh')" style="color:rgba(255,220,120,.9)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      🤖 AI 課程刷新
+    </button>
   </nav>
   <div class="sidebar-footer">2026 年度 · 資料最後更新<br><span id="last-update">2025/05/15</span></div>
 </aside>
@@ -313,9 +326,13 @@ textarea.form-input{resize:vertical;min-height:70px;line-height:1.5}
   <div class="topbar">
     <div><div class="topbar-title">更新課程來源</div><div class="topbar-sub">管理機構資料與課程清單，新增 / 編輯 / 刪除</div></div>
     <div class="topbar-actions">
+      <button class="btn btn-sm" onclick="exportXLSX()" style="color:var(--green);border-color:var(--green)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        匯出 Excel (.xlsx)
+      </button>
       <button class="btn btn-sm" onclick="exportData()">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        匯出 JSON
+        備份 JSON
       </button>
       <button class="btn btn-sm" onclick="document.getElementById('import-file').click()">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -362,7 +379,227 @@ textarea.form-input{resize:vertical;min-height:70px;line-height:1.5}
 </main>
 </div>
 
-<!-- Modal -->
+<!-- Health Check Page -->
+<div class="page" id="page-health">
+  <div class="topbar">
+    <div><div class="topbar-title">連結健康偵測</div><div class="topbar-sub">自動偵測所有課程連結是否仍有效</div></div>
+    <div class="topbar-actions">
+      <button class="btn btn-primary" id="link-check-btn" onclick="runLinkCheck()">🔍 偵測所有連結</button>
+    </div>
+  </div>
+  <div class="content">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px">
+        <div class="section-title">偵測說明</div>
+        <p style="font-size:12px;color:var(--text2);line-height:1.8;margin-top:8px">
+          點擊「偵測所有連結」後，平台會對每個不重複的課程 URL 發出連線請求。<br>
+          <strong>✅ 正常</strong>：伺服器有回應（含 CORS 限制下的「不透明」回應）。<br>
+          <strong>❌ 失效</strong>：連線被完全拒絕，或逾時 8 秒未回應。<br>
+          <strong>⚠️ 不明</strong>：伺服器有回應但無法判斷狀態（CORS 遮蔽），通常代表連結仍有效。<br><br>
+          建議每季執行一次，發現❌時至「更新課程來源」修正連結。
+        </p>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px">
+        <div class="section-title">偵測進度</div>
+        <div style="margin-top:12px;font-size:28px;font-weight:700;color:var(--accent)" id="check-progress">尚未執行</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px">共 <span id="total-url-count">0</span> 個不重複連結</div>
+        <div style="margin-top:12px">
+          <div id="check-progress-bar" style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden">
+            <div id="check-bar-fill" style="height:100%;width:0;background:var(--green);border-radius:3px;transition:width .3s"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="section-title">偵測結果</div>
+    <div id="check-results" style="color:var(--text3);font-size:13px;padding:20px 0">尚未執行偵測，點擊右上角按鈕開始。</div>
+  </div>
+</div>
+
+<!-- Add Institution Page -->
+<div class="page" id="page-addinst">
+  <div class="topbar">
+    <div><div class="topbar-title">新增機構</div><div class="topbar-sub">填寫機構資訊，AI 自動判斷是否可企業內訓</div></div>
+  </div>
+  <div class="content">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px">
+        <div class="section-title">機構基本資訊</div>
+        <div style="margin-top:14px">
+          <div class="form-row">
+            <label class="form-label">機構簡稱（ID）</label>
+            <input class="form-input" id="new-inst-id" placeholder="如 IIIT、NVIDIA、CCL…（英文縮寫）">
+            <div class="form-hint">用於系統內部識別，建議 2-8 個英文字</div>
+          </div>
+          <div class="form-row">
+            <label class="form-label">機構全名（中文）</label>
+            <input class="form-input" id="new-inst-name" placeholder="如 台灣 NVIDIA 教育訓練中心">
+          </div>
+          <div class="form-row">
+            <label class="form-label">機構英文名稱</label>
+            <input class="form-input" id="new-inst-en" placeholder="如 NVIDIA Taiwan Training Center">
+          </div>
+          <div class="form-row">
+            <label class="form-label">官方網站 URL</label>
+            <input class="form-input" id="new-inst-url" placeholder="https://..." oninput="clearAiReason()">
+          </div>
+          <div class="form-row">
+            <label class="form-label">機構簡介（幫助 AI 判斷）</label>
+            <textarea class="form-input" id="new-inst-desc" placeholder="簡述機構性質、提供哪些服務、是否有企業包班/講師外派…" rows="4"></textarea>
+          </div>
+          <div class="form-row">
+            <label class="form-label">課程性質</label>
+            <div style="display:flex;gap:10px;align-items:center;margin-top:6px">
+              <select class="form-input" id="new-inst-type" style="flex:1">
+                <option value="star">★ 可企業內訓</option>
+                <option value="ext">外訓為主</option>
+              </select>
+              <button class="btn btn-primary" id="ai-classify-btn" onclick="autoClassifyAndFill()" style="white-space:nowrap;flex-shrink:0">🤖 AI 自動判斷</button>
+            </div>
+            <div id="ai-reason" style="display:none;margin-top:6px;font-size:11px;padding:6px 10px;background:var(--accent-lt);color:var(--accent);border-radius:var(--radius);border:1px solid var(--accent)"></div>
+            <div class="form-hint">點擊「AI 自動判斷」，Claude 會根據機構名稱、官網、簡介自動判斷性質</div>
+          </div>
+          <div class="form-row">
+            <label class="form-label">代表圖示文字（1-3字）</label>
+            <input class="form-input" id="new-inst-icon" placeholder="如 NV、台積、CCL" maxlength="4">
+          </div>
+          <div class="form-row">
+            <label class="form-label">代表色（Hex）</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input class="form-input" id="new-inst-color" placeholder="#1C3557" style="flex:1">
+              <input type="color" id="new-inst-colorpick" value="#1C3557" oninput="document.getElementById('new-inst-color').value=this.value" style="width:36px;height:36px;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;padding:2px">
+            </div>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="addInstitution()">✅ 新增此機構</button>
+        </div>
+      </div>
+
+      <div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px">
+          <div class="section-title">判斷邏輯說明</div>
+          <div style="margin-top:10px">
+            <div style="padding:10px 12px;background:var(--green-lt);border-radius:var(--radius);border-left:3px solid var(--green);margin-bottom:10px">
+              <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:4px">★ 可企業內訓條件</div>
+              <ul style="font-size:11px;color:var(--green);line-height:1.8;padding-left:16px">
+                <li>有提供「企業包班」或「講師外派」服務</li>
+                <li>有企業服務專頁或客服電話</li>
+                <li>非政府法規補助性課程（可移至企業辦）</li>
+                <li>非個人訂閱制線上平台</li>
+              </ul>
+            </div>
+            <div style="padding:10px 12px;background:var(--gray-lt);border-radius:var(--radius);border-left:3px solid var(--gray)">
+              <div style="font-size:12px;font-weight:700;color:var(--gray);margin-bottom:4px">外訓為主條件</div>
+              <ul style="font-size:11px;color:var(--gray);line-height:1.8;padding-left:16px">
+                <li>政府補助計畫（WDA、青年職訓等），依法不得辦企業內訓</li>
+                <li>個人訂閱制線上平台（無企業包班機制）</li>
+                <li>只在固定場地開班，不提供外派</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px">
+          <div class="section-title">目前機構列表</div>
+          <div id="inst-list-manage" style="margin-top:10px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AI Refresh Page -->
+<div class="page" id="page-airefresh">
+  <div class="topbar">
+    <div><div class="topbar-title">🤖 AI 課程刷新</div><div class="topbar-sub">貼上機構課程頁網址，Claude 自動分析並建議新課程</div></div>
+  </div>
+  <div class="content">
+
+    <!-- Step 1: Input -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px">
+      <div class="section-title">Step 1　輸入課程來源</div>
+      <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div>
+          <label class="form-label" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);display:block;margin-bottom:5px">目標機構</label>
+          <select class="form-input" id="refresh-inst" style="font-size:13px">
+            <option value="">— 選擇機構 —</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);display:block;margin-bottom:5px">對應 Realtek 類別（可複選）</label>
+          <select class="form-input" id="refresh-cat" style="font-size:13px">
+            <option value="">— 全部類別 —</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <label class="form-label" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);display:block;margin-bottom:5px">課程頁面 URL（貼上機構課程列表頁或特定課程頁）</label>
+        <input class="form-input" id="refresh-url" placeholder="https://www.iiiedu.org.tw/courses/  或  https://aiacademy.tw/genai2026-courses/ …" style="font-size:13px">
+        <div style="font-size:10px;color:var(--text3);margin-top:4px">Claude 會根據此 URL 的機構背景知識與你填寫的補充說明來建議課程，無需能實際爬取網頁</div>
+      </div>
+      <div style="margin-top:12px">
+        <label class="form-label" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);display:block;margin-bottom:5px">補充說明（可選）</label>
+        <textarea class="form-input" id="refresh-hint" rows="2" placeholder="如：重點放在 LLM 與 RAG 相關課程、只要企業內訓課程、主管培訓方向…" style="font-size:13px"></textarea>
+      </div>
+      <div style="margin-top:14px;display:flex;align-items:center;gap:10px">
+        <button class="btn btn-primary" id="refresh-run-btn" onclick="runAIRefresh()" style="padding:9px 20px;font-size:13px">
+          🤖 啟動 AI 課程刷新
+        </button>
+        <span id="refresh-status" style="font-size:12px;color:var(--text3)"></span>
+      </div>
+    </div>
+
+    <!-- Step 2: Results -->
+    <div id="refresh-results-wrap" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="section-title">Step 2　確認建議課程</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm" onclick="selectAllSuggestions(true)">全選</button>
+          <button class="btn btn-sm" onclick="selectAllSuggestions(false)">全不選</button>
+          <button class="btn btn-primary btn-sm" onclick="importSelected()">✅ 匯入勾選課程</button>
+        </div>
+      </div>
+      <div style="background:var(--amber-lt);border:1px solid #E8C86A;border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:11px;color:var(--amber)">
+        ⚠️ AI 建議僅供參考，請人工確認課程名稱、時數、費用與官網是否相符後再匯入。匯入後可在「更新課程來源」頁面隨時編輯。
+      </div>
+      <div id="refresh-results" style="display:flex;flex-direction:column;gap:10px"></div>
+      <div id="import-toast" style="display:none;margin-top:14px;padding:10px 16px;background:var(--green-lt);border:1px solid var(--green);border-radius:var(--radius);font-size:12px;color:var(--green)"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Course Detail Drawer -->
+<div id="detail-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200" onclick="closeDetail()"></div>
+<div id="detail-drawer" style="display:none;position:fixed;top:0;right:0;width:440px;height:100vh;background:var(--surface);box-shadow:-4px 0 24px rgba(0,0,0,.12);z-index:201;overflow-y:auto;flex-direction:column">
+  <div style="padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface)">
+    <div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)" id="d-code"></div>
+      <div style="font-size:15px;font-weight:700;margin-top:3px;line-height:1.35" id="d-name"></div>
+    </div>
+    <button onclick="closeDetail()" style="background:none;border:none;cursor:pointer;font-size:22px;color:var(--text3);padding:2px 6px;border-radius:4px;line-height:1">×</button>
+  </div>
+  <div style="padding:18px 20px">
+    <div id="d-badges" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px" id="d-meta"></div>
+    <div style="margin-bottom:18px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:8px">適合對象</div>
+      <div style="font-size:13px;color:var(--text2)" id="d-target"></div>
+    </div>
+    <div style="margin-bottom:20px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:8px">課程大綱</div>
+      <div id="d-outline" style="font-size:13px;line-height:1.8;color:var(--text2)"></div>
+    </div>
+    <div style="margin-bottom:20px" id="d-url-wrap">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:8px">課程連結</div>
+      <a id="d-url" href="#" target="_blank" style="font-size:13px;color:var(--accent);word-break:break-all"></a>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:14px;display:flex;gap:8px">
+      <button class="btn btn-primary" id="d-edit-btn" onclick="">✏️ 編輯課程</button>
+      <a id="d-link-btn" href="#" target="_blank" class="btn">🔗 前往課程頁</a>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeModalIfOverlay(event)">
   <div class="modal">
     <div class="modal-header">
@@ -620,8 +857,9 @@ function renderTable(){
       <td><span class="cat-tag" style="background:${C.bg};color:${C.color}">${C.id} ${C.short}</span><br><span class="tag ${c.type==='star'?'tag-star':'tag-ext'}">${c.type==='star'?'★ 內訓':'外訓'}</span></td>
       <td style="font-size:11px">${c.hours||'—'}</td>
       <td style="font-size:11px">${c.fee||'—'}</td>
-      <td class="outline-col">${(c.outline||'').substring(0,80)}${(c.outline||'').length>80?'…':''}</td>
+      <td class="outline-col" style="cursor:pointer" onclick="openDetail(${ci})">${(c.outline||'').substring(0,80)}${(c.outline||'').length>80?'<span style="color:var(--accent);font-size:10px"> 點擊展開全文 →</span>':''}</td>
       <td><div style="display:flex;flex-direction:column;gap:4px">
+        <button class="link-btn" style="background:none;border:none;cursor:pointer;color:var(--accent);text-align:left" onclick="openDetail(${ci})">📄 詳細大綱</button>
         ${c.url?`<a class="link-btn" href="${c.url}" target="_blank">🔗 課程頁</a>`:''}
         <button class="link-btn" style="background:none;border:none;cursor:pointer;color:var(--accent)" onclick="editCourse(${ci})">✏️ 編輯</button>
         <button class="link-btn" style="background:none;border:none;cursor:pointer;color:var(--red)" onclick="deleteCourse(${ci})">🗑️ 刪除</button>
@@ -797,11 +1035,448 @@ function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
-  document.querySelectorAll('.nav-item')[['dashboard','courses','institutions','matrix','edit'].indexOf(id)].classList.add('active');
+  const pages=['dashboard','courses','institutions','matrix','edit','health','addinst','airefresh'];
+  const idx=pages.indexOf(id);
+  if(idx>=0) document.querySelectorAll('.nav-item')[idx].classList.add('active');
+  if(id==='health'){
+    const ul=document.getElementById('total-url-count');
+    if(ul) ul.textContent=[...new Set(courses.map(c=>c.url).filter(Boolean))].length;
+  }
+  if(id==='addinst') renderInstListManage();
+  if(id==='airefresh') buildRefreshOptions();
+}
+
+/* ── XLSX EXPORT ── */
+function exportXLSX(){
+  if(typeof XLSX==='undefined'){
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload=()=>_doExportXLSX();
+    document.head.appendChild(s);
+  } else _doExportXLSX();
+}
+function _doExportXLSX(){
+  const wb=XLSX.utils.book_new();
+  const HD=['Realtek類別','課程代號','課程名稱','時數','費用','適合對象','課程大綱摘要','課程連結','★/外訓'];
+
+  /* 總覽 */
+  const ovRows=[['外部課程資源對應 Realtek 8 大類別 — 各機構總覽儀表板'],
+    ['★=可安排企業內訓　無★=僅限派員外訓'],[''],
+    ['類別','課程全名',...INST_DATA.map(i=>(i.type==='star'?'★':'')+i.id),'合計']];
+  CATEGORIES.forEach(cat=>{
+    const row=[cat.id+' '+cat.short,cat.full];
+    let tot=0;
+    INST_DATA.forEach(inst=>{const n=courses.filter(c=>c.inst===inst.id&&c.cat===cat.id).length;row.push(n);tot+=n;});
+    row.push(tot);ovRows.push(row);
+  });
+  const wsOv=XLSX.utils.aoa_to_sheet(ovRows);
+  wsOv['!cols']=[{wch:12},{wch:32},...INST_DATA.map(()=>({wch:9})),{wch:6}];
+  XLSX.utils.book_append_sheet(wb,wsOv,'📊 總覽儀表板');
+
+  /* 各★機構各自一個Sheet */
+  const emojiMap={TCFST:'🏫',TAICA:'🎓',UUU:'🏢',PCSchool:'🏢',TibaMe:'⭐',III:'🔬'};
+  INST_DATA.filter(i=>i.type==='star').forEach(inst=>{
+    const rows=[[inst.name+' — AI 課程清單　★ 可安排企業內訓'],[inst.url],[''],HD];
+    courses.filter(c=>c.inst===inst.id).forEach(c=>{
+      const cat=getCat(c.cat);
+      rows.push([cat.id+' '+cat.short,c.code,c.name,c.hours||'',c.fee||'',c.target||'',c.outline||'',c.url||'','★']);
+    });
+    if(rows.length===4) rows.push(['（尚無課程）']);
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:14},{wch:12},{wch:42},{wch:14},{wch:16},{wch:16},{wch:50},{wch:32},{wch:8}];
+    const emoji=emojiMap[inst.id]||'🏫';
+    XLSX.utils.book_append_sheet(wb,ws,`${emoji} ${inst.id}課程★`);
+  });
+
+  /* 外訓課程（WDA+AIA 及其他外訓機構） */
+  const extRows=[['外訓課程彙整 — 僅限派員外部參訓'],[''],
+    ['Realtek類別','機構',...HD]];
+  INST_DATA.filter(i=>i.type==='ext').forEach(inst=>{
+    courses.filter(c=>c.inst===inst.id).forEach(c=>{
+      const cat=getCat(c.cat);
+      extRows.push([cat.id+' '+cat.short,inst.name,c.code,c.name,c.hours||'',c.fee||'',c.target||'',c.outline||'',c.url||'','外訓']);
+    });
+  });
+  const wsExt=XLSX.utils.aoa_to_sheet(extRows);
+  wsExt['!cols']=[{wch:14},{wch:16},{wch:12},{wch:42},{wch:14},{wch:16},{wch:16},{wch:50},{wch:32},{wch:8}];
+  XLSX.utils.book_append_sheet(wb,wsExt,'📤 外訓課程');
+
+  /* 補足分析矩陣 */
+  const mxRows=[['補足分析矩陣 — 8大類別 × 各機構課程數'],[''],
+    ['類別','全名',...INST_DATA.map(i=>(i.type==='star'?'★':'')+i.id),'合計']];
+  CATEGORIES.forEach(cat=>{
+    const counts=INST_DATA.map(i=>courses.filter(c=>c.inst===i.id&&c.cat===cat.id).length);
+    mxRows.push([cat.id,cat.full,...counts,counts.reduce((a,b)=>a+b,0)]);
+  });
+  const wsMx=XLSX.utils.aoa_to_sheet(mxRows);
+  wsMx['!cols']=[{wch:8},{wch:32},...INST_DATA.map(()=>({wch:9})),{wch:6}];
+  XLSX.utils.book_append_sheet(wb,wsMx,'🔀 補足分析矩陣');
+
+  const date=new Date().toLocaleDateString('zh-TW').replace(/\//g,'-');
+  XLSX.writeFile(wb,`外部課程對應分析_${date}.xlsx`);
+}
+
+/* ── LINK HEALTH CHECK ── */
+let checkRunning=false;
+async function runLinkCheck(){
+  if(checkRunning){alert('偵測進行中，請稍候…');return;}
+  checkRunning=true;
+  const btn=document.getElementById('link-check-btn');
+  if(btn){btn.textContent='⏳ 偵測中…';btn.disabled=true;}
+  const urlSet=[...new Set(courses.map(c=>c.url).filter(Boolean))];
+  const results=[];let done=0;
+  const prog=document.getElementById('check-progress');
+  const bar=document.getElementById('check-bar-fill');
+  await Promise.all(urlSet.map(async url=>{
+    let status='unknown';
+    try{
+      const ctrl=new AbortController();
+      const timer=setTimeout(()=>ctrl.abort(),8000);
+      const r=await fetch(url,{method:'HEAD',mode:'no-cors',signal:ctrl.signal});
+      clearTimeout(timer);
+      status=(r.type==='opaque'||r.status===0||r.ok)?'ok':'warn';
+    }catch(e){ status=e.name==='AbortError'?'timeout':'error'; }
+    done++;
+    if(prog) prog.textContent=`${done} / ${urlSet.length}`;
+    if(bar) bar.style.width=Math.round(done/urlSet.length*100)+'%';
+    const affected=courses.filter(c=>c.url===url);
+    results.push({url,status,count:affected.length,names:affected.map(c=>c.name).slice(0,2)});
+  }));
+  checkRunning=false;
+  if(btn){btn.textContent='🔍 偵測所有連結';btn.disabled=false;}
+  renderCheckResults(results);
+}
+function renderCheckResults(results){
+  const wrap=document.getElementById('check-results');if(!wrap)return;
+  const ok=results.filter(r=>r.status==='ok').length;
+  const err=results.filter(r=>r.status==='error'||r.status==='timeout').length;
+  const unk=results.length-ok-err;
+  wrap.innerHTML=`<div style="display:flex;gap:10px;margin-bottom:14px">
+    <span style="background:var(--green-lt);color:var(--green);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700">✅ 正常 ${ok}</span>
+    <span style="background:var(--red-lt);color:var(--red);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700">❌ 失效 ${err}</span>
+    <span style="background:var(--surface2);color:var(--text3);padding:5px 12px;border-radius:20px;font-size:12px">⚠️ 不明 ${unk}</span>
+  </div>
+  <div style="border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden">
+    ${results.sort((a,b)=>{const o={error:0,timeout:1,unknown:2,ok:3};return (o[a.status]||2)-(o[b.status]||2);}).map(r=>`
+    <div style="display:flex;gap:10px;align-items:flex-start;padding:9px 14px;border-bottom:1px solid var(--border);background:${r.status==='error'||r.status==='timeout'?'var(--red-lt)':r.status==='ok'?'var(--surface)':'var(--surface2)'}">
+      <span style="font-size:15px;flex-shrink:0;margin-top:1px">${r.status==='ok'?'✅':r.status==='error'?'❌':r.status==='timeout'?'⏱️':'⚠️'}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;color:var(--text2);word-break:break-all">${r.url}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:2px">${r.names.join('、')}${r.count>2?` 等共 ${r.count} 門課`:''}</div>
+      </div>
+      <span style="flex-shrink:0;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;${r.status==='ok'?'background:var(--green-lt);color:var(--green)':r.status==='error'||r.status==='timeout'?'background:var(--red-lt);color:var(--red)':'background:var(--surface2);color:var(--text3)'}">${r.status==='ok'?'正常':r.status==='error'?'失效':r.status==='timeout'?'逾時':'不明'}</span>
+    </div>`).join('')}
+  </div>
+  <div style="font-size:10px;color:var(--text3);margin-top:8px;line-height:1.7">⚠️ 技術說明：瀏覽器安全政策（CORS）限制下，使用 no-cors 模式偵測。「不明」表示伺服器有回應但被 CORS 遮蔽，通常代表連結仍有效。紅色「失效」表示連線完全被拒絕或逾時 8 秒，需至「更新課程來源」頁面修正。</div>`;
+}
+
+/* ── AI AUTO-CLASSIFY INSTITUTION ── */
+async function autoClassifyAndFill(){
+  const name=document.getElementById('new-inst-name')?.value||'';
+  const url=document.getElementById('new-inst-url')?.value||'';
+  const desc=document.getElementById('new-inst-desc')?.value||'';
+  if(!name){alert('請先填寫機構名稱');return;}
+  const btn=document.getElementById('ai-classify-btn');
+  if(btn){btn.textContent='🤖 分析中…';btn.disabled=true;}
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:200,
+        messages:[{role:'user',content:`你是 Realtek 研發創新學院課程採購顧問。根據以下機構資訊判斷性質，只回傳 JSON。
+
+機構名稱：${name}
+官網：${url||'（未填）'}
+簡介：${desc||'（未填）'}
+
+判斷標準：
+- "star"（★可企業內訓）：有企業包班/講師外派服務，課程可移至企業內辦。
+- "ext"（僅外訓）：政府補助課程依法不得企業內訓，或個人訂閱線上平台。
+
+只回傳：{"type":"star","reason":"理由20字內","confidence":"high/medium/low"}`}]
+      })
+    });
+    const data=await res.json();
+    const text=data.content?.[0]?.text||'{}';
+    const parsed=JSON.parse(text.replace(/```json?|```/g,'').trim());
+    document.getElementById('new-inst-type').value=parsed.type||'star';
+    const r=document.getElementById('ai-reason');
+    r.textContent=`AI判斷：${parsed.type==='star'?'★ 可企業內訓':'外訓為主'} — ${parsed.reason||''}（信心度：${parsed.confidence||'?'}）`;
+    r.style.display='block';
+  }catch(e){
+    const r=document.getElementById('ai-reason');
+    r.textContent='API 呼叫失敗，請手動選擇。錯誤：'+e.message;
+    r.style.cssText+=';background:var(--red-lt);color:var(--red);border-color:var(--red)';
+    r.style.display='block';
+  }
+  if(btn){btn.textContent='🤖 AI 自動判斷';btn.disabled=false;}
+}
+function clearAiReason(){ const r=document.getElementById('ai-reason');if(r)r.style.display='none'; }
+
+function addInstitution(){
+  const id=document.getElementById('new-inst-id').value.trim();
+  const name=document.getElementById('new-inst-name').value.trim();
+  const en=document.getElementById('new-inst-en').value.trim();
+  const url=document.getElementById('new-inst-url').value.trim();
+  const desc=document.getElementById('new-inst-desc').value.trim();
+  const type=document.getElementById('new-inst-type').value;
+  const icon=document.getElementById('new-inst-icon').value.trim()||id.substring(0,3);
+  const color=document.getElementById('new-inst-color').value.trim()||'#1C3557';
+  if(!id||!name){alert('請填寫機構簡稱與全名');return;}
+  if(INST_DATA.find(i=>i.id===id)){alert(`機構簡稱「${id}」已存在，請使用不同的簡稱`);return;}
+  INST_DATA.push({id,name,en:en||id,icon,iconBg:color,type,desc,url:url||'',courses:{}});
+  /* Save custom insts */
+  const custom=JSON.parse(localStorage.getItem('rtk-custom-insts')||'[]');
+  custom.push({id,name,en,icon,iconBg:color,type,desc,url});
+  localStorage.setItem('rtk-custom-insts',JSON.stringify(custom));
+  /* Clear form */
+  ['new-inst-id','new-inst-name','new-inst-en','new-inst-url','new-inst-desc','new-inst-icon'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+  document.getElementById('ai-reason').style.display='none';
+  buildModalOptions(); renderInst(); renderInstListManage(); renderAll();
+  alert(`✅ 機構「${name}」已新增！現在可至「更新課程來源」頁面為此機構新增課程。`);
+}
+
+/* ── AI COURSE REFRESH ── */
+let suggestedCourses=[];
+
+function buildRefreshOptions(){
+  const instSel=document.getElementById('refresh-inst');
+  if(!instSel||instSel.options.length>1) return;
+  INST_DATA.forEach(i=>instSel.add(new Option(`${i.id} — ${i.name}`,i.id)));
+  const catSel=document.getElementById('refresh-cat');
+  if(catSel&&catSel.options.length<=1)
+    CATEGORIES.forEach(c=>catSel.add(new Option(`${c.id} ${c.short}`,c.id)));
+}
+
+async function runAIRefresh(){
+  const instId=document.getElementById('refresh-inst').value;
+  const catId=document.getElementById('refresh-cat').value;
+  const url=document.getElementById('refresh-url').value.trim();
+  const hint=document.getElementById('refresh-hint').value.trim();
+  if(!instId){alert('請先選擇目標機構');return;}
+
+  const btn=document.getElementById('refresh-run-btn');
+  const status=document.getElementById('refresh-status');
+  btn.disabled=true; btn.textContent='⏳ AI 分析中…';
+  status.textContent='正在呼叫 Claude，請稍候約 10~20 秒…';
+  document.getElementById('refresh-results-wrap').style.display='none';
+
+  const inst=getInst(instId);
+  const existing=courses.filter(c=>c.inst===instId).map(c=>c.code);
+  const catFilter=catId?CATEGORIES.find(c=>c.id===catId):null;
+
+  const prompt=`你是 Realtek 研發創新學院的課程規劃顧問。
+請根據以下機構背景資訊，建議 5~10 門適合 Realtek 半導體研發工程師的 AI 課程。
+
+【機構資訊】
+名稱：${inst.name}（${inst.en||inst.id}）
+官網：${url||inst.url||'（未提供）'}
+機構簡介：${inst.desc||'（未提供）'}
+性質：${inst.type==='star'?'★ 可企業內訓（可安排講師外派/企業包班）':'外訓為主（員工須親赴外部參訓）'}
+
+【已有課程代號（請勿重複建議）】
+${existing.length?existing.join('、'):'（尚無課程）'}
+
+【篩選條件】
+${catFilter?`僅建議「${catFilter.id} ${catFilter.full}」類別的課程`:'涵蓋適合的所有類別'}
+${hint?`補充需求：${hint}`:''}
+
+【Realtek 8大技術類別說明】
+02 SD-S：LLM/RAG/Agent/系統設計軟體
+03 DD：深度學習/影像辨識/數位設計
+04 General：通用AI素養/主管培訓/認證
+06 DV：AI資安/數位驗證
+07 SD-H：AIoT/嵌入式AI/系統設計硬體
+08 DTD：智慧製造/數位技術設計
+（01 Layout 和 05 Analog 幾乎無外部課程，請勿建議）
+
+請只回傳以下 JSON 陣列，不要有任何其他文字或 markdown：
+[
+  {
+    "code": "${instId}-XX01",
+    "name": "課程完整名稱（含主要技術關鍵字）",
+    "cat": "02",
+    "type": "${inst.type}",
+    "hours": "時數（如 21小時（3天）或 請洽招生簡章）",
+    "fee": "費用（如 請洽報名 或 NT$17,000）",
+    "target": "適合對象（如 Python工程師/ML工程師）",
+    "outline": "課程大綱摘要（50-100字，列出3-5個核心技術點，用頓號分隔）",
+    "url": "課程連結URL（若不確定填機構首頁）",
+    "reason": "建議理由（為何適合Realtek，20字內）"
+  }
+]`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:2000,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const data=await res.json();
+    const text=(data.content?.[0]?.text||'[]').replace(/```json?|```/g,'').trim();
+    let parsed=[];
+    try{ parsed=JSON.parse(text); }
+    catch(e){ throw new Error('AI 回應格式解析失敗：'+text.substring(0,100)); }
+    suggestedCourses=parsed;
+    renderSuggestions(parsed,inst,url);
+    document.getElementById('refresh-results-wrap').style.display='block';
+    status.textContent=`✅ AI 建議了 ${parsed.length} 門課程，請確認後匯入`;
+  }catch(e){
+    status.textContent='❌ 發生錯誤：'+e.message;
+    status.style.color='var(--red)';
+  }
+  btn.disabled=false; btn.textContent='🤖 啟動 AI 課程刷新';
+}
+
+function renderSuggestions(list,inst,sourceUrl){
+  const wrap=document.getElementById('refresh-results');
+  if(!list.length){wrap.innerHTML='<div style="color:var(--text3);padding:20px 0;text-align:center">AI 未建議任何課程，請調整篩選條件或補充說明後重試。</div>';return;}
+  wrap.innerHTML=list.map((c,i)=>{
+    const cat=getCat(c.cat);
+    const isExisting=courses.some(x=>x.inst===inst.id&&(x.code===c.code||x.name===c.name));
+    return `<div style="background:var(--surface);border:1px solid ${isExisting?'var(--border2)':'var(--border)'};border-radius:var(--radius-lg);padding:14px 16px;opacity:${isExisting?.6:1}">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <input type="checkbox" id="sug-${i}" ${isExisting?'':'checked'} ${isExisting?'disabled':''} style="margin-top:3px;width:15px;height:15px;flex-shrink:0;cursor:pointer">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+            <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">${c.code}</span>
+            <span class="cat-tag" style="background:${cat.bg};color:${cat.color};font-size:10px">${cat.id} ${cat.short}</span>
+            <span class="tag ${c.type==='star'?'tag-star':'tag-ext'}" style="font-size:10px">${c.type==='star'?'★ 可內訓':'外訓'}</span>
+            ${isExisting?'<span style="background:var(--amber-lt);color:var(--amber);padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700">已存在</span>':''}
+          </div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">${c.name}</div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:6px">${c.outline||'—'}</div>
+          <div style="display:flex;gap:12px;font-size:11px;color:var(--text3)">
+            <span>⏱ ${c.hours||'—'}</span>
+            <span>💰 ${c.fee||'—'}</span>
+            <span>👤 ${(c.target||'—').substring(0,30)}</span>
+          </div>
+          ${c.reason?`<div style="margin-top:6px;font-size:10px;padding:4px 9px;background:var(--accent-lt);color:var(--accent);border-radius:4px;display:inline-block">💡 ${c.reason}</div>`:''}
+          ${c.url?`<div style="margin-top:6px"><a href="${c.url}" target="_blank" style="font-size:10px;color:var(--accent)">🔗 ${c.url.substring(0,60)}${c.url.length>60?'…':''}</a></div>`:''}
+        </div>
+        <button onclick="editSuggestion(${i})" style="background:none;border:1px solid var(--border);border-radius:var(--radius);font-size:11px;color:var(--text2);padding:4px 8px;cursor:pointer;flex-shrink:0">✏️ 編輯</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function editSuggestion(i){
+  const c=suggestedCourses[i];
+  /* pre-fill the edit modal with suggestion data */
+  document.getElementById('edit-idx').value=-1;
+  document.getElementById('f-inst').value=c.inst||document.getElementById('refresh-inst').value;
+  document.getElementById('f-code').value=c.code||'';
+  document.getElementById('f-name').value=c.name||'';
+  document.getElementById('f-cat').value=c.cat||'04';
+  document.getElementById('f-type').value=c.type||'star';
+  document.getElementById('f-hours').value=c.hours||'';
+  document.getElementById('f-fee').value=c.fee||'';
+  document.getElementById('f-target').value=c.target||'';
+  document.getElementById('f-outline').value=c.outline||'';
+  document.getElementById('f-url').value=c.url||'';
+  document.getElementById('modal-title').textContent='編輯建議課程後新增';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function selectAllSuggestions(val){
+  document.querySelectorAll('#refresh-results input[type=checkbox]:not(:disabled)').forEach(cb=>cb.checked=val);
+}
+
+function importSelected(){
+  const instId=document.getElementById('refresh-inst').value;
+  const checkboxes=document.querySelectorAll('#refresh-results input[type=checkbox]:not(:disabled)');
+  let added=0;
+  checkboxes.forEach((cb,i)=>{
+    if(!cb.checked) return;
+    const c={...suggestedCourses[i],inst:instId};
+    delete c.reason;
+    if(!courses.some(x=>x.inst===c.inst&&x.name===c.name)){
+      courses.push(c); added++;
+    }
+  });
+  if(!added){alert('沒有選取任何課程，或選取的課程已存在。');return;}
+  saveData(); buildInstChips();
+  const toast=document.getElementById('import-toast');
+  toast.textContent=`✅ 成功匯入 ${added} 門課程！可至「課程清單」或「更新課程來源」查看與編輯。`;
+  toast.style.display='block';
+  setTimeout(()=>toast.style.display='none',5000);
+  /* re-render to mark imported as existing */
+  const inst=getInst(instId);
+  renderSuggestions(suggestedCourses,inst,'');
+}
+  const wrap=document.getElementById('inst-list-manage');if(!wrap)return;
+  const custom=JSON.parse(localStorage.getItem('rtk-custom-insts')||'[]').map(i=>i.id);
+  wrap.innerHTML=INST_DATA.map(inst=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)">
+      <div style="width:28px;height:28px;border-radius:6px;background:${inst.iconBg}20;color:${inst.iconBg};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">${inst.icon}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600;color:var(--text)">${inst.name}</div>
+        <div style="font-size:10px;color:var(--text3)">${inst.id} · ${courses.filter(c=>c.inst===inst.id).length} 門課程</div>
+      </div>
+      <span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;${inst.type==='star'?'background:var(--green-lt);color:var(--green)':'background:var(--gray-lt);color:var(--gray)'}">${inst.type==='star'?'★ 內訓':'外訓'}</span>
+      ${custom.includes(inst.id)?`<button onclick="removeInst('${inst.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:11px;padding:3px 6px">刪除</button>`:''}
+    </div>`).join('');
+}
+function removeInst(id){
+  if(!confirm(`確定刪除機構「${id}」？相關課程不會被刪除，但機構資訊將消失。`))return;
+  const idx=INST_DATA.findIndex(i=>i.id===id);
+  if(idx>=0) INST_DATA.splice(idx,1);
+  const custom=JSON.parse(localStorage.getItem('rtk-custom-insts')||'[]').filter(i=>i.id!==id);
+  localStorage.setItem('rtk-custom-insts',JSON.stringify(custom));
+  buildModalOptions(); renderInst(); renderInstListManage(); renderAll();
+}
+function loadCustomInsts(){
+  const custom=JSON.parse(localStorage.getItem('rtk-custom-insts')||'[]');
+  custom.forEach(inst=>{ if(!INST_DATA.find(i=>i.id===inst.id)) INST_DATA.push(inst); });
+}
+
+function openDetail(idx){
+  const c=courses[idx];
+  const I=getInst(c.inst); const C=getCat(c.cat);
+  document.getElementById('d-code').textContent=`${I.id}  ·  ${c.code}`;
+  document.getElementById('d-name').textContent=c.name.replace(/^★\s*/,'');
+  document.getElementById('d-badges').innerHTML=`
+    <span class="cat-tag" style="background:${C.bg};color:${C.color};font-size:11px">${C.id} ${C.full.substring(0,24)}</span>
+    <span class="tag ${c.type==='star'?'tag-star':'tag-ext'}" style="font-size:11px">${c.type==='star'?'★ 可企業內訓':'外訓為主'}</span>
+    <span style="background:${I.iconBg}18;color:${I.iconBg};padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600">${I.name}</span>`;
+  document.getElementById('d-meta').innerHTML=`
+    <div style="background:var(--surface2);border-radius:var(--radius);padding:10px">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">時數</div>
+      <div style="font-size:13px;font-weight:500">${c.hours||'—'}</div>
+    </div>
+    <div style="background:var(--surface2);border-radius:var(--radius);padding:10px">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">費用</div>
+      <div style="font-size:13px;font-weight:500;color:var(--green)">${c.fee||'—'}</div>
+    </div>`;
+  document.getElementById('d-target').textContent=c.target||'—';
+  // Format outline as bullet points if comma/、separated
+  const outlineText=c.outline||'（尚無大綱說明）';
+  const bullets=outlineText.split(/[、，,；;]\s*/).filter(Boolean);
+  document.getElementById('d-outline').innerHTML = bullets.length>2
+    ? bullets.map(b=>`<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)"><span style="color:var(--accent);flex-shrink:0;margin-top:1px">▸</span><span>${b.trim()}</span></div>`).join('')
+    : `<div style="padding:5px 0">${outlineText}</div>`;
+  const urlEl=document.getElementById('d-url');
+  const urlWrap=document.getElementById('d-url-wrap');
+  if(c.url){ urlEl.href=c.url; urlEl.textContent=c.url; urlWrap.style.display='block';}
+  else urlWrap.style.display='none';
+  document.getElementById('d-link-btn').href=c.url||'#';
+  document.getElementById('d-link-btn').style.display=c.url?'':'none';
+  document.getElementById('d-edit-btn').onclick=()=>{closeDetail();editCourse(idx);};
+  document.getElementById('detail-overlay').style.display='block';
+  const dr=document.getElementById('detail-drawer');
+  dr.style.display='flex'; dr.style.animation='slideIn .2s ease';
+}
+function closeDetail(){
+  document.getElementById('detail-overlay').style.display='none';
+  document.getElementById('detail-drawer').style.display='none';
 }
 
 function init(){
-  loadData(); buildInstChips(); buildCatSelect(); buildModalOptions(); renderAll();
+  loadCustomInsts(); loadData(); buildInstChips(); buildCatSelect(); buildModalOptions(); renderAll();
 }
 init();
 </script>

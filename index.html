@@ -923,19 +923,21 @@ const _ls = {
 };
 async function loadFromJSON(){
   try{
-    const res = await fetch('data/courses.json?t='+Date.now());
-    if(!res.ok) throw new Error('no json');
-    const data = await res.json();
+    const res = await fetch('./data/courses.json?t='+Date.now());
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const text = await res.text();
+    // 確認回傳的是 JSON 而非 HTML
+    if(text.trim().startsWith('<')) throw new Error('Got HTML instead of JSON');
+    const data = JSON.parse(text);
     if(data.courses && data.courses.length > 0){
       courses = data.courses;
-      // 更新時間顯示
       if(data.meta && data.meta.generated){
         _ls.set('rtk-lastupdate', data.meta.generated);
       }
       console.log('[loadFromJSON] 從 courses.json 載入', courses.length, '筆');
       return true;
     }
-  }catch(e){ console.log('[loadFromJSON] 改用 localStorage/預設資料'); }
+  }catch(e){ console.log('[loadFromJSON] 失敗，改用預設資料：', e.message); }
   return false;
 }
 function loadData(){

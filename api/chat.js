@@ -8,7 +8,7 @@ module.exports = async function handler(req, res) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
 
-  const { mode, messages, model = 'claude-sonnet-4-20250514', max_tokens = 4000 } = req.body;
+  const { mode, messages, model = 'claude-sonnet-4-6', max_tokens = 4000 } = req.body;
 
   try {
     if (mode === 'refresh') {

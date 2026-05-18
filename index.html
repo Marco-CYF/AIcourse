@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Realtek 2026 AI 外部課程分析平台</title>
+<title>Realtek 2026 AI 外部機構課程分析平台</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -227,7 +227,7 @@ textarea.form-input{resize:vertical;min-height:70px;line-height:1.5}
     </button>
     <button class="nav-item" onclick="showPage('autorefresh')" style="color:rgba(120,220,160,.9)">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-      🔄 一鍵自動刷新
+      🔄 一鍵自動刷新(非正確版)
     </button>
   </nav>
   <div class="sidebar-footer">
@@ -603,7 +603,7 @@ textarea.form-input{resize:vertical;min-height:70px;line-height:1.5}
   <div class="topbar">
     <div>
       <div class="topbar-title">🔄 一鍵自動刷新</div>
-      <div class="topbar-sub">Claude 自動搜尋各機構最新課程，比對現有資料後建議更新</div>
+      <div class="topbar-sub">Claude 每天凌晨08:00自動搜尋各機構最新課程，比對現有資料後才會更新，一鍵更新功能僅為系統猜測之結果</div>
     </div>
     <div class="topbar-actions">
       <button class="btn btn-primary" id="auto-refresh-btn" onclick="startAutoRefresh()" style="padding:9px 20px;font-size:13px;gap:6px">
@@ -617,7 +617,7 @@ textarea.form-input{resize:vertical;min-height:70px;line-height:1.5}
       <span style="font-size:18px;flex-shrink:0">🔍</span>
       <div style="font-size:12px;color:var(--accent);line-height:1.8">
         <strong>運作方式：</strong>Claude 透過 web search 搜尋各機構最新課程，比對現有清單，找出新增或已下架的課程。<br>
-        <strong>注意：</strong>每個機構間隔 15 秒發送（避免超過 API 限制），可以全選，系統會依序處理。結果需人工確認後匯入。
+        <strong>注意：</strong>每個機構間隔 60 秒發送（避免超過 API 限制），可以全選，系統會依序處理。結果需人工確認後匯入。
       </div>
     </div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;margin-bottom:20px">
@@ -1823,7 +1823,7 @@ async function startAutoRefresh() {
 
     done++;
     updateBar();
-    // 每個機構之間等 15 秒，避免超過 API rate limit（30,000 tokens/min）
+    // 每個機構之間等 60 秒，避免超過 API rate limit（30,000 tokens/min）
     if (done < selected.length) {
       const waitSec = 20;
       for (let w = waitSec; w > 0; w--) {

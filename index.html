@@ -230,7 +230,12 @@ textarea.form-input{resize:vertical;min-height:70px;line-height:1.5}
       🔄 一鍵自動刷新
     </button>
   </nav>
-  <div class="sidebar-footer">2026 年度 · 資料最後更新<br><span id="last-update">2025/05/15</span></div>
+  <div class="sidebar-footer">
+    2026 年度<br>
+    <span style="font-size:10px;color:rgba(255,255,255,.35)">資料最後更新</span><br>
+    <span id="last-update" style="color:rgba(255,255,255,.7);font-size:11px">—</span><br>
+    <span id="last-update-time" style="color:rgba(255,255,255,.4);font-size:10px">—</span>
+  </div>
 </aside>
 
 <main class="main">
@@ -924,14 +929,22 @@ function loadData(){
 }
 function saveData(){
   _ls.set('rtk-courses',JSON.stringify(courses));
-  _ls.set('rtk-lastupdate',new Date().toLocaleDateString('zh-TW'));
+  const now=new Date();
+  _ls.set('rtk-lastupdate',now.toLocaleDateString('zh-TW'));
+  _ls.set('rtk-lastupdatetime',now.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}));
   renderAll();
 }
 function getInst(id){ return INST_DATA.find(i=>i.id===id)||{name:id,iconBg:'#888',type:'star'}; }
 function getCat(id){ return CATEGORIES.find(c=>c.id===id)||{short:id,color:'#888',bg:'#eee'}; }
 
 function renderAll(){
-  try{ const d=_ls.get('rtk-lastupdate'); if(d) document.getElementById('last-update').textContent=d; }catch(e){}
+  try{
+    const d=_ls.get('rtk-lastupdate');
+    const t=_ls.get('rtk-lastupdatetime');
+    if(d){ document.getElementById('last-update').textContent=d; }
+    const tel=document.getElementById('last-update-time');
+    if(tel) tel.textContent=t||'';
+  }catch(e){}
   try{ renderDashboard(); }catch(e){ console.warn('renderDashboard:',e); }
   try{ renderTable(); }catch(e){ console.warn('renderTable:',e); }
   try{ renderInst(); }catch(e){ console.warn('renderInst:',e); }
@@ -1233,17 +1246,19 @@ function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>{
     n.classList.remove('active');
-    if(n.getAttribute('onclick')==="showPage('"+id+"')") n.classList.add('active');
+    const oc=n.getAttribute('onclick')||'';
+    if(oc===`showPage('${id}')`) n.classList.add('active');
   });
   const pg=document.getElementById('page-'+id);
   if(pg) pg.classList.add('active');
+  else { console.warn('[showPage] page not found: page-'+id); return; }
   if(id==='health'){
     const ul=document.getElementById('total-url-count');
     if(ul) ul.textContent=[...new Set(courses.map(c=>c.url).filter(Boolean))].length;
   }
-  if(id==='addinst') renderInstListManage();
-  if(id==='airefresh') buildRefreshOptions();
-  if(id==='autorefresh') initAutoRefreshPage();
+  if(id==='addinst') { try{renderInstListManage();}catch(e){} }
+  if(id==='airefresh') { try{buildRefreshOptions();}catch(e){} }
+  if(id==='autorefresh') { try{initAutoRefreshPage();}catch(e){} }
 }
 
 /* ── XLSX EXPORT ── */
@@ -1860,8 +1875,170 @@ function arImportSelected() {
 }
 /* ═══════════════════════════════════════════════════════ */
 
+/* ── AI Refresh Page: missing functions (補齊) ── */
+function generateRefreshPrompt(){
+  const instId=document.getElementById('refresh-inst').value;
+  const catId=document.getElementById('refresh-cat').value;
+  const hint=(document.getElementById('refresh-hint').value||'').trim();
+  if(!instId){alert('請先選擇目標機構');return;}
+  const inst=getInst(instId);
+  const existing=courses.filter(c=>c.inst===instId).map(c=>c.code);
+  const catFilter=catId?CATEGORIES.find(c=>c.id===catId):null;
+  const prompt=`你是 Realtek 研發創新學院的課程規劃顧問。
+請根據以下機構背景資訊，建議 5~10 門適合 Realtek 半導體研發工程師的 AI 課程。
+
+【機構資訊】
+名稱：${inst.name}（${inst.en||inst.id}）
+官網：${inst.url||'（未提供）'}
+機構簡介：${inst.desc||'（未提供）'}
+性質：${inst.type==='star'?'★ 可企業內訓':'外訓為主'}
+
+【已有課程代號（請勿重複建議）】
+${existing.length?existing.join('、'):'（尚無課程）'}
+
+【篩選條件】
+${catFilter?'僅建議「'+catFilter.id+' '+catFilter.full+'」類別':'涵蓋適合的所有類別'}
+${hint?'補充需求：'+hint:''}
+
+【Realtek 8大技術類別】
+02 SD-S：LLM/RAG/Agent/系統設計軟體
+03 DD：深度學習/影像辨識/數位設計
+04 General：通用AI素養/主管培訓/認證
+06 DV：AI資安/數位驗證
+07 SD-H：AIoT/嵌入式AI/系統設計硬體
+08 DTD：智慧製造/數位技術設計
+
+請只回傳以下 JSON 陣列，不要任何其他文字：
+[{"code":"${instId}-XX01","name":"課程名稱","cat":"02","type":"${inst.type}","hours":"時數","fee":"費用","target":"適合對象","outline":"大綱摘要50~80字","url":"課程URL"}]`;
+  const out=document.getElementById('refresh-prompt-output');
+  if(out){out.value=prompt;out.style.color='var(--text)';}
+}
+
+function copyPrompt(){
+  const out=document.getElementById('refresh-prompt-output');
+  if(!out||!out.value){alert('請先點「產生 Prompt」');return;}
+  navigator.clipboard.writeText(out.value).then(()=>{
+    const btn=document.getElementById('copy-prompt-btn');
+    if(btn){btn.textContent='已複製！';setTimeout(()=>btn.textContent='複製',2000);}
+  }).catch(()=>{
+    out.select();document.execCommand('copy');
+    alert('已複製到剪貼簿');
+  });
+}
+
+function parseAndPreviewJSON(){
+  const raw=(document.getElementById('refresh-json-input').value||'').trim();
+  const status=document.getElementById('parse-status');
+  if(!raw){status.textContent='請先貼上 Claude 回傳的 JSON';status.style.color='var(--red)';return;}
+  try{
+    const match=raw.match(/\[\s*\S*\]/);
+    const jsonStr=match?match[0]:raw;
+    const parsed=JSON.parse(jsonStr.replace(/```json?|```/g,'').trim());
+    if(!Array.isArray(parsed)){throw new Error('需要 JSON 陣列格式');}
+    const instId=document.getElementById('refresh-inst').value||'UNKNOWN';
+    suggestedCourses=parsed.map(c=>({...c,inst:c.inst||instId}));
+    const inst=getInst(instId);
+    renderSuggestions(suggestedCourses,inst,'');
+    document.getElementById('refresh-results-wrap').style.display='block';
+    status.textContent=`✅ 解析成功，共 ${parsed.length} 門課程`;
+    status.style.color='var(--green)';
+  }catch(e){
+    status.textContent='❌ JSON 格式錯誤：'+e.message;
+    status.style.color='var(--red)';
+  }
+}
+/* ── end missing functions ── */
+
+
+/* ── AUTO DAILY REFRESH — 每日自動背景刷新 ── */
+async function checkAndAutoRefresh(){
+  const today=new Date().toLocaleDateString('zh-TW');
+  const lastDate=_ls.get('rtk-lastupdate');
+  if(lastDate===today) return; // 今天已更新，跳過
+
+  // 檢查 /api/chat 是否可用（Vercel 環境）
+  try{
+    const test=await fetch('/api/chat',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({mode:'chat',model:'claude-sonnet-4-20250514',max_tokens:10,
+        messages:[{role:'user',content:'ping'}]})
+    });
+    if(!test.ok) return; // API 不可用，跳過
+  }catch(e){ return; } // 非 Vercel 環境，跳過
+
+  console.log('[AutoRefresh] 偵測到新的一天，開始靜默刷新…');
+  showAutoRefreshBadge('刷新中…','#F59E0B');
+
+  // 依序刷新各機構（取 3 個最重要的）
+  const targets = INST_DATA.slice(0,3).map(i=>i.id);
+  let newCount = 0;
+
+  for(const instId of targets){
+    const inst=getInst(instId);
+    const existing=courses.filter(c=>c.inst===instId).map(c=>c.name.substring(0,20));
+    const prompt=`你是 Realtek 研發創新學院課程顧問。請用 web_search 搜尋「${inst.name}」（${inst.url}）最新 AI 課程（2025-2026年）。
+現有課程：${existing.join('、')||'無'}
+只回傳 JSON 陣列（無新課程回傳 []）：
+[{"code":"${instId}-X01","name":"課程名稱","cat":"02","type":"${inst.type}","hours":"","fee":"","target":"","outline":"","url":""}]`;
+    try{
+      const res=await fetch('/api/chat',{method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({mode:'refresh',model:'claude-sonnet-4-20250514',max_tokens:1500,
+          messages:[{role:'user',content:prompt}]})
+      });
+      if(!res.ok) continue;
+      const data=await res.json();
+      const textBlocks=(data.content||[]).filter(b=>b.type==='text');
+      const raw=textBlocks.map(b=>b.text).join('').replace(/```json?|```/g,'').trim();
+      const match=raw.match(/\[[\s\S]*\]/);
+      if(!match) continue;
+      const suggestions=JSON.parse(match[0]).map(c=>({...c,inst:instId}));
+      const newOnes=suggestions.filter(s=>
+        s.name&&s.name.length>3&&
+        !courses.some(x=>x.inst===instId&&x.name.substring(0,20)===s.name.substring(0,20))
+      );
+      if(newOnes.length){
+        courses.push(...newOnes);
+        newCount+=newOnes.length;
+      }
+    }catch(e){ console.warn('[AutoRefresh] '+instId+' 錯誤:',e.message); }
+    await new Promise(r=>setTimeout(r,1500));
+  }
+
+  // 儲存並更新時間戳
+  saveData();
+  const badge=newCount>0?`+${newCount} 門新課程`:'無新課程（已是最新）';
+  showAutoRefreshBadge(badge, newCount>0?'var(--green)':'var(--text3)');
+  console.log('[AutoRefresh] 完成。新課程：'+newCount);
+
+  // 3 秒後隱藏 badge
+  setTimeout(()=>showAutoRefreshBadge('',''),3000);
+}
+
+function showAutoRefreshBadge(msg, color){
+  let badge=document.getElementById('auto-refresh-badge');
+  if(!badge){
+    badge=document.createElement('div');
+    badge.id='auto-refresh-badge';
+    badge.style.cssText='position:fixed;bottom:20px;right:20px;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;color:#fff;z-index:999;transition:all .3s;box-shadow:0 4px 12px rgba(0,0,0,.2)';
+    document.body.appendChild(badge);
+  }
+  if(!msg){badge.style.opacity='0';return;}
+  badge.textContent='🔄 '+msg;
+  badge.style.background=color;
+  badge.style.opacity='1';
+}
+/* ── end AUTO DAILY REFRESH ── */
 function init(){
-  loadCustomInsts(); loadData(); buildInstChips(); buildCatSelect(); buildModalOptions(); renderAll();
+  loadCustomInsts(); loadData(); buildInstChips(); buildCatSelect(); buildModalOptions();
+  // 若從未記錄過更新時間，顯示今日作為初始時間
+  if(!_ls.get('rtk-lastupdate')){
+    const now=new Date();
+    _ls.set('rtk-lastupdate', now.toLocaleDateString('zh-TW'));
+    _ls.set('rtk-lastupdatetime', now.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}));
+  }
+  renderAll();
+  setTimeout(checkAndAutoRefresh, 2000);
 }
 init();
 </script>

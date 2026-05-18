@@ -1773,15 +1773,27 @@ async function startAutoRefresh() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      if (!res.ok) {
+        const errMsg = typeof data.error === 'object'
+          ? (data.error.message || JSON.stringify(data.error))
+          : (data.error || `HTTP ${res.status}`);
+        throw new Error(errMsg);
+      }
 
-      // Extract final text block (after tool use)
+      // Extract final text block (after tool use — may include web_search blocks)
       const textBlocks = (data.content || []).filter(b => b.type === 'text');
       const rawText = textBlocks.map(b => b.text).join('').replace(/```json?|```/g,'').trim();
 
       // Find JSON array in response
-      const jsonMatch = rawText.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) throw new Error('回應中找不到 JSON 陣列');
+      const jsonMatch = rawText.match(/\[[\s\S]*?\]/);
+      if (!jsonMatch) {
+        // If no JSON found, it means no new courses
+        arAllSuggested.push(); // nothing to add
+        statusEl.textContent = '➖';
+        msgEl.textContent = '無新課程（已是最新）';
+        msgEl.style.color = 'var(--text3)';
+        continue;
+      }
 
       const suggestions = JSON.parse(jsonMatch[0]).map(c => ({ ...c, inst: instId }));
       const newOnes = suggestions.filter(s =>

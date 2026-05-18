@@ -921,6 +921,23 @@ const _ls = {
   set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} },
   del(k){ try{ localStorage.removeItem(k); }catch(e){} }
 };
+async function loadFromJSON(){
+  try{
+    const res = await fetch('data/courses.json?t='+Date.now());
+    if(!res.ok) throw new Error('no json');
+    const data = await res.json();
+    if(data.courses && data.courses.length > 0){
+      courses = data.courses;
+      // 更新時間顯示
+      if(data.meta && data.meta.generated){
+        _ls.set('rtk-lastupdate', data.meta.generated);
+      }
+      console.log('[loadFromJSON] 從 courses.json 載入', courses.length, '筆');
+      return true;
+    }
+  }catch(e){ console.log('[loadFromJSON] 改用 localStorage/預設資料'); }
+  return false;
+}
 function loadData(){
   try{
     const saved = _ls.get('rtk-courses');
@@ -1447,13 +1464,13 @@ function buildRefreshOptions(){
 async function runAIRefresh(){
   const instId=document.getElementById('refresh-inst').value;
   const catId=document.getElementById('refresh-cat').value;
-  const url=document.getElementById('refresh-url').value.trim();
+  const url=(document.getElementById('refresh-url')?.value||'').trim();
   const hint=document.getElementById('refresh-hint').value.trim();
   if(!instId){alert('請先選擇目標機構');return;}
 
   const btn=document.getElementById('refresh-run-btn');
   const status=document.getElementById('refresh-status');
-  btn.disabled=true; btn.textContent='⏳ AI 分析中…';
+  if(btn){btn.disabled=true; btn.textContent='⏳ AI 分析中…';}
   status.textContent='正在呼叫 Claude，請稍候約 10~20 秒…';
   document.getElementById('refresh-results-wrap').style.display='none';
 
@@ -1519,7 +1536,7 @@ ${hint?`補充需求：${hint}`:''}
     suggestedCourses=parsed;
     renderSuggestions(parsed,inst,url);
     document.getElementById('refresh-results-wrap').style.display='block';
-    status.textContent=`✅ AI 建議了 ${parsed.length} 門課程，請確認後匯入`;
+    if(status) status.textContent=`✅ AI 建議了 ${parsed.length} 門課程，請確認後匯入`;
   }catch(e){
     status.textContent='❌ 發生錯誤：'+e.message;
     status.style.color='var(--red)';
@@ -1747,14 +1764,14 @@ async function startAutoRefresh() {
       .map(c => `${c.id} ${c.short}`).join('、');
 
     const existingCodes = courses.filter(c=>c.inst===instId).map(c=>c.code).slice(0,5).join(',');
-    const prompt = `搜尋「${inst.name}」最新AI課程。已有：${existingCodes||'無'}。只回傳JSON：[{"code":"${instId}-X01","name":"課程名","cat":"02","type":"${inst.type}","hours":"","fee":"","target":"","outline":"","url":""}]，無新課程回傳[]`;
+    const prompt = `你是課程顧問。根據你對「${inst.name}」（${inst.url}）的知識，列出5門最新AI相關課程，排除已有課程：${existingCodes||'無'}。只回傳JSON陣列，不要其他文字：[{"code":"${instId}-N01","name":"課程名稱","cat":"02","type":"${inst.type}","hours":"","fee":"","target":"","outline":"50字摘要","url":"${inst.url}"}]。若無新課程回傳[]。`;
 
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          mode: 'refresh',
+          mode: 'chat',
           model: 'claude-sonnet-4-6',
           max_tokens: 800,
           messages: [{ role: 'user', content: prompt }]
@@ -1888,7 +1905,7 @@ function arImportSelected() {
 function generateRefreshPrompt(){
   const instId=document.getElementById('refresh-inst').value;
   const catId=document.getElementById('refresh-cat').value;
-  const hint=(document.getElementById('refresh-hint').value||'').trim();
+  const hint=(document.getElementById('refresh-hint')?.value||'').trim();
   if(!instId){alert('請先選擇目標機構');return;}
   const inst=getInst(instId);
   const existing=courses.filter(c=>c.inst===instId).map(c=>c.code);
@@ -1992,7 +2009,7 @@ async function checkAndAutoRefresh(){
     try{
       const res=await fetch('/api/chat',{method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({mode:'refresh',model:'claude-sonnet-4-6',max_tokens:1200,
+        body:JSON.stringify({mode:'chat',model:'claude-sonnet-4-6',max_tokens:800,
           messages:[{role:'user',content:prompt}]})
       });
       if(!res.ok) continue;
@@ -2038,16 +2055,19 @@ function showAutoRefreshBadge(msg, color){
   badge.style.opacity='1';
 }
 /* ── end AUTO DAILY REFRESH ── */
-function init(){
-  loadCustomInsts(); loadData(); buildInstChips(); buildCatSelect(); buildModalOptions();
-  // 若從未記錄過更新時間，顯示今日作為初始時間
+async function init(){
+  loadCustomInsts();
+  // 優先從 data/courses.json 載入（GitHub Actions 每日更新）
+  const loaded = await loadFromJSON();
+  if(!loaded) loadData();
+  buildInstChips(); buildCatSelect(); buildModalOptions();
   if(!_ls.get('rtk-lastupdate')){
     const now=new Date();
     _ls.set('rtk-lastupdate', now.toLocaleDateString('zh-TW'));
     _ls.set('rtk-lastupdatetime', now.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}));
   }
   renderAll();
-  setTimeout(checkAndAutoRefresh, 2000);
+  // 每日自動刷新改由 GitHub Actions 處理，此處不再觸發
 }
 init();
 </script>

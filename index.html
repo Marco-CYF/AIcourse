@@ -1746,19 +1746,8 @@ async function startAutoRefresh() {
     const catSummary = CATEGORIES.filter(c => !['01','05'].includes(c.id))
       .map(c => `${c.id} ${c.short}`).join('、');
 
-    const prompt = `你是 Realtek 研發創新學院課程規劃顧問。請用 web_search 工具搜尋「${inst.name}」（${inst.url}）目前最新的 AI 相關課程，特別針對以下類別：${catSummary}。
-
-現有課程（請勿重複建議）：${existing || '（尚無）'}
-
-搜尋步驟：
-1. 搜尋「${inst.name} AI 課程 2025 2026」
-2. 搜尋「${inst.id} 生成式AI LLM 深度學習 課程」
-3. 若有具體課程頁面，進一步搜尋取得詳細資訊
-
-找到課程後，只回傳以下 JSON 陣列（不要任何 markdown 或說明文字）：
-[{"code":"${instId}-XX01","name":"課程名稱","cat":"02","type":"${inst.type}","hours":"時數","fee":"費用","target":"適合對象","outline":"大綱摘要50~80字","url":"課程URL"}]
-
-若搜尋後確認沒有新課程，回傳空陣列：[]`;
+    const existingCodes = courses.filter(c=>c.inst===instId).map(c=>c.code).slice(0,5).join(',');
+    const prompt = `搜尋「${inst.name}」最新AI課程。已有：${existingCodes||'無'}。只回傳JSON：[{"code":"${instId}-X01","name":"課程名","cat":"02","type":"${inst.type}","hours":"","fee":"","target":"","outline":"","url":""}]，無新課程回傳[]`;
 
     try {
       const res = await fetch('/api/chat', {
@@ -1767,7 +1756,7 @@ async function startAutoRefresh() {
         body: JSON.stringify({
           mode: 'refresh',
           model: 'claude-sonnet-4-6',
-          max_tokens: 1200,
+          max_tokens: 800,
           messages: [{ role: 'user', content: prompt }]
         })
       });
@@ -1817,7 +1806,7 @@ async function startAutoRefresh() {
     updateBar();
     // 每個機構之間等 15 秒，避免超過 API rate limit（30,000 tokens/min）
     if (done < selected.length) {
-      const waitSec = 15;
+      const waitSec = 20;
       for (let w = waitSec; w > 0; w--) {
         const nextInst = selected[done];
         const nextMsgEl = document.getElementById('ar-msg-' + nextInst);

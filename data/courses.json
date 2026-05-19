@@ -2,8 +2,8 @@
   "meta": {
     "version": "2.0",
     "generated": "2026-05-19",
-    "total": 137,
-    "last_refresh": "2026-05-19T02:12:10.651915"
+    "total": 141,
+    "last_refresh": "2026-05-19T02:26:53.725252"
   },
   "courses": [
     {
@@ -1649,6 +1649,54 @@
       "outline": "結合AI技術與醫療產業需求，涵蓋醫療影像辨識、臨床資料分析及智慧診斷等應用，協助學員掌握AI在醫療領域的實際落地技術。",
       "url": "https://aiacademy.tw/genai2026-courses/",
       "inst": "AIA"
+    },
+    {
+      "code": "AIA-N01",
+      "name": "大型語言模型實作班（素養 + LLM + 產業應用 雲端流程自動化）",
+      "cat": "04",
+      "type": "ext",
+      "hours": "21小時（3天）",
+      "fee": "17,000元",
+      "target": "對LLM與自動化流程有興趣的一般白領上班族或剛入門的IT新手（無程式背景）",
+      "outline": "學習LLM基礎知識、ChatGPT提問技術、Make自動化流程應用，建立簡單自動化流程，了解多模態模型概念與辦公室自動化應用。",
+      "url": "https://aiacademy.tw/genai2026-courses/",
+      "inst": "AIA"
+    },
+    {
+      "code": "AIA-N02",
+      "name": "AIPM 班（AI專案管理）",
+      "cat": "08",
+      "type": "ext",
+      "hours": "",
+      "fee": "",
+      "target": "",
+      "outline": "針對AI專案管理需求，培養學員具備AI專案規劃、執行與管理能力，適合有意推動企業AI落地的專案管理人員。",
+      "url": "https://aiacademy.tw/genai2026-courses/",
+      "inst": "AIA"
+    },
+    {
+      "code": "MOEA-N01",
+      "name": "Power BI 數據洞察：企業戰情室儀表板實戰課",
+      "cat": "04",
+      "type": "ext",
+      "hours": "6",
+      "fee": "",
+      "target": "",
+      "outline": "透過Power BI建置商業智慧儀表板，導入生成式AI於數據解讀、報告撰寫、業務洞察與營運預測，結合BI與AI工具推動企業數位轉型。",
+      "url": "https://www.dtts.org.tw/subsidy/Course/Courselist.aspx",
+      "inst": "MOEA"
+    },
+    {
+      "code": "MOEA-N02",
+      "name": "Edge AI 語音指令辨識應用",
+      "cat": "04",
+      "type": "ext",
+      "hours": "14",
+      "fee": "",
+      "target": "",
+      "outline": "介紹自動語音辨識（ASR）技術基礎與應用，透過實作範例帶領學員熟悉語音指令辨識開發，涵蓋語音指令模型建立與案例分析。",
+      "url": "https://www.dtts.org.tw/subsidy/Course/Courselist.aspx",
+      "inst": "MOEA"
     }
   ]
 }

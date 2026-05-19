@@ -61,8 +61,11 @@ INSTITUTIONS = [
     },
     {
         'id': 'MOEA', 'name': '經濟部商業發展署', 'type': 'ext',
-        'url': 'https://serv.gcis.nat.gov.tw/AOCAI/Course',
-        'crawl_urls': ['https://serv.gcis.nat.gov.tw/AOCAI/Course']
+        'url': 'https://www.dtts.org.tw/subsidy/Course/Courselist.aspx',
+        'crawl_urls': [
+            'https://www.dtts.org.tw/subsidy/Course/Courselist.aspx',
+            'https://serv.gcis.nat.gov.tw/AOCAI/Course',
+        ]
     },
 ]
 

@@ -21,7 +21,10 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install anthropic
+        run: |
+          pip install anthropic playwright
+          playwright install chromium
+          playwright install-deps chromium
 
       - name: Run refresh
         env:

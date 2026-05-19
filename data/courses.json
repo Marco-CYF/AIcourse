@@ -1,8 +1,9 @@
 {
   "meta": {
     "version": "2.0",
-    "generated": "2026-05-18",
-    "total": 115
+    "generated": "2026-05-19",
+    "total": 118,
+    "last_refresh": "2026-05-19T01:20:20.671891"
   },
   "courses": [
     {
@@ -1384,6 +1385,42 @@
       "target": "製造/半導體/ICT研發工程師",
       "outline": "AI應用於製造業全流程（預測維護/品質檢測/產能優化）、半導體製程AI應用、工業數據分析實作、智慧工廠AI架構設計、業界導入案例研討（含竹科企業）",
       "url": "https://aiacademy.tw"
+    },
+    {
+      "code": "AIA-N01",
+      "name": "AIPM 班",
+      "cat": "04",
+      "type": "ext",
+      "hours": "",
+      "fee": "",
+      "target": "AI產品/專案管理人員",
+      "outline": "針對AI產品與專案管理人員設計，培養AI產品經理核心能力，涵蓋AI專案規劃、需求分析與產品落地實務應用。",
+      "url": "https://aiacademy.tw/genai2026-courses/",
+      "inst": "AIA"
+    },
+    {
+      "code": "AIA-N02",
+      "name": "產業 AI 專班",
+      "cat": "04",
+      "type": "ext",
+      "hours": "",
+      "fee": "",
+      "target": "各產業AI應用推動人員",
+      "outline": "針對各產業AI導入需求設計，提供台北總校、台中分校、南部分校三地實體授課，協助產業人員掌握AI應用與轉型實務。",
+      "url": "https://aiacademy.tw/genai2026-courses/",
+      "inst": "AIA"
+    },
+    {
+      "code": "AIA-N03",
+      "name": "智慧醫療班",
+      "cat": "08",
+      "type": "ext",
+      "hours": "",
+      "fee": "",
+      "target": "醫療產業AI應用人員",
+      "outline": "結合AI技術與醫療產業需求，於台北總校及台中分校開課，培養學員將AI應用於智慧醫療場景之實務能力。",
+      "url": "https://aiacademy.tw/genai2026-courses/",
+      "inst": "AIA"
     }
   ]
 }

@@ -2,8 +2,8 @@
   "meta": {
     "version": "2.0",
     "generated": "2026-05-19",
-    "total": 118,
-    "last_refresh": "2026-05-19T01:20:20.671891"
+    "total": 132,
+    "last_refresh": "2026-05-19T01:49:05.422276"
   },
   "courses": [
     {
@@ -1421,6 +1421,174 @@
       "outline": "結合AI技術與醫療產業需求，於台北總校及台中分校開課，培養學員將AI應用於智慧醫療場景之實務能力。",
       "url": "https://aiacademy.tw/genai2026-courses/",
       "inst": "AIA"
+    },
+    {
+      "code": "PCSchool-N01",
+      "name": "Python深度學習應用開發",
+      "cat": "02",
+      "type": "star",
+      "hours": "",
+      "fee": "",
+      "target": "",
+      "outline": "涵蓋梯度下降法、神經網路、卷積神經網路、自然語言處理及強化學習，培養深度學習核心開發能力。",
+      "url": "https://business.gjunedu.com/Course/AI%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7%E9%96%8B%E7%99%BC?c=2",
+      "inst": "PCSchool"
+    },
+    {
+      "code": "PCSchool-N02",
+      "name": "Python人工智慧整合開發",
+      "cat": "02",
+      "type": "star",
+      "hours": "",
+      "fee": "",
+      "target": "",
+      "outline": "整合強化學習、NLP情感分析、視覺影像人臉辨識及大型語言模型操作，並實作LineBot互動應用。",
+      "url": "https://business.gjunedu.com/Course/AI%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7%E9%96%8B%E7%99%BC?c=2",
+      "inst": "PCSchool"
+    },
+    {
+      "code": "PCSchool-N03",
+      "name": "NLP基礎與實踐：市場情緒指標分析應用",
+      "cat": "02",
+      "type": "star",
+      "hours": "",
+      "fee": "",
+      "target": "",
+      "outline": "從Python基礎到深度學習，專注中文NLP市場情緒分析，將非結構化文字轉化為具投資決策價值的量化指標。",
+      "url": "https://business.gjunedu.com/Course/AI%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7%E9%96%8B%E7%99%BC?c=2",
+      "inst": "PCSchool"
+    },
+    {
+      "code": "PCSchool-N04",
+      "name": "用Vibe Coding + Gemini API打造你的第一個AI聊天室",
+      "cat": "02",
+      "type": "star",
+      "hours": "",
+      "fee": "",
+      "target": "",
+      "outline": "以Vibe Coding哲學結合Google Gemini API，完成前後端全棧開發並雲端部署具上下文記憶的AI聊天室產品。",
+      "url": "https://business.gjunedu.com/Course/AI%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7%E9%96%8B%E7%99%BC?c=2",
+      "inst": "PCSchool"
+    },
+    {
+      "code": "AIA-N01",
+      "name": "AIPM 班（台北第二期／台中第一期）",
+      "cat": "04",
+      "type": "ext",
+      "hours": "",
+      "fee": "",
+      "target": "",
+      "outline": "針對AI產品經理培育，涵蓋AI專案管理、產品規劃與落地實作，適合有意轉型為AI產品管理角色的專業人士。",
+      "url": "https://aiacademy.tw/",
+      "inst": "AIA"
+    },
+    {
+      "code": "AIA-N02",
+      "name": "產業 AI 專班（台北總校／台中分校／南部分校）",
+      "cat": "04",
+      "type": "ext",
+      "hours": "",
+      "fee": "",
+      "target": "",
+      "outline": "針對各產業量身設計的AI應用專班，協助企業與產業人才將AI技術導入實際業務場景，提升產業競爭力。",
+      "url": "https://aiacademy.tw/",
+      "inst": "AIA"
+    },
+    {
+      "code": "AIA-N03",
+      "name": "智慧醫療班（台北總校／台中分校）",
+      "cat": "04",
+      "type": "ext",
+      "hours": "",
+      "fee": "",
+      "target": "",
+      "outline": "專為醫療產業設計的AI應用課程，涵蓋智慧醫療場景實作與AI技術應用，協助醫療專業人員掌握AI工具與解決方案。",
+      "url": "https://aiacademy.tw/",
+      "inst": "AIA"
+    },
+    {
+      "code": "MOEA-N01",
+      "name": "iPAS AI應用規劃師課程",
+      "cat": "04",
+      "type": "ext",
+      "hours": "",
+      "fee": "",
+      "target": "",
+      "outline": "針對服務業AI人才培育，以iPAS AI應用規劃師認證為目標設計之課程，培養學員具備AI應用規劃能力。",
+      "url": "https://serv.gcis.nat.gov.tw/AOCAI/Course",
+      "inst": "MOEA"
+    },
+    {
+      "code": "MOEA-N02",
+      "name": "CEO班",
+      "cat": "04",
+      "type": "ext",
+      "hours": "",
+      "fee": "",
+      "target": "",
+      "outline": "針對企業高階主管設計之AI人才培育課程，協助CEO了解AI導入策略與服務業數位轉型方向。",
+      "url": "https://serv.gcis.nat.gov.tw/AOCAI/Course",
+      "inst": "MOEA"
+    },
+    {
+      "code": "MOEA-N03",
+      "name": "中階班-AI導入工作坊",
+      "cat": "04",
+      "type": "ext",
+      "hours": "",
+      "fee": "",
+      "target": "",
+      "outline": "針對中階管理人員設計之AI導入工作坊，透過實作方式學習如何將AI技術導入服務業工作流程。",
+      "url": "https://serv.gcis.nat.gov.tw/AOCAI/Course",
+      "inst": "MOEA"
+    },
+    {
+      "code": "MOEA-N04",
+      "name": "基礎實務班",
+      "cat": "04",
+      "type": "ext",
+      "hours": "",
+      "fee": "",
+      "target": "",
+      "outline": "提供服務業從業人員AI基礎知識與實務技能學習，建立跨領域AI應用之基礎能力。",
+      "url": "https://serv.gcis.nat.gov.tw/AOCAI/Course",
+      "inst": "MOEA"
+    },
+    {
+      "code": "MOEA-N05",
+      "name": "實作應用班-客戶服務類",
+      "cat": "04",
+      "type": "ext",
+      "hours": "",
+      "fee": "",
+      "target": "",
+      "outline": "針對客戶服務職類設計之AI實作應用課程，學習運用AI工具提升客戶服務品質與效率。",
+      "url": "https://serv.gcis.nat.gov.tw/AOCAI/Course",
+      "inst": "MOEA"
+    },
+    {
+      "code": "MOEA-N06",
+      "name": "實作應用班-行銷業務類",
+      "cat": "04",
+      "type": "ext",
+      "hours": "",
+      "fee": "",
+      "target": "",
+      "outline": "針對行銷業務職類設計之AI實作應用課程，學習運用AI工具優化行銷策略與業務拓展。",
+      "url": "https://serv.gcis.nat.gov.tw/AOCAI/Course",
+      "inst": "MOEA"
+    },
+    {
+      "code": "MOEA-N07",
+      "name": "實作應用班-產品企劃類",
+      "cat": "04",
+      "type": "ext",
+      "hours": "",
+      "fee": "",
+      "target": "",
+      "outline": "針對產品企劃職類設計之AI實作應用課程，學習運用AI工具強化產品規劃與創新設計能力。",
+      "url": "https://serv.gcis.nat.gov.tw/AOCAI/Course",
+      "inst": "MOEA"
     }
   ]
 }

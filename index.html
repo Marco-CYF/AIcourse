@@ -787,18 +787,25 @@ async function loadFromJSON(){
     const res = await fetch('./data/courses.json?t='+Date.now());
     if(!res.ok) throw new Error('HTTP '+res.status);
     const text = await res.text();
-    // 確認回傳的是 JSON 而非 HTML
     if(text.trim().startsWith('<')) throw new Error('Got HTML instead of JSON');
     const data = JSON.parse(text);
     if(data.courses && data.courses.length > 0){
       courses = data.courses;
+      // 載入自訂機構資料
+      if(data.institutions && data.institutions.length > 0){
+        data.institutions.forEach(inst=>{
+          if(!INST_DATA.find(i=>i.id===inst.id)) INST_DATA.push(inst);
+        });
+      }
       if(data.meta && data.meta.generated){
         _ls.set('rtk-lastupdate', data.meta.generated);
+        const t = data.meta.last_refresh ? new Date(data.meta.last_refresh).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}) : '';
+        _ls.set('rtk-lastupdatetime', t);
       }
-      console.log('[loadFromJSON] 從 courses.json 載入', courses.length, '筆');
+      console.log('[loadFromJSON] 載入課程', courses.length, '筆');
       return true;
     }
-  }catch(e){ console.log('[loadFromJSON] 失敗，改用預設資料：', e.message); }
+  }catch(e){ console.log('[loadFromJSON] 失敗：', e.message); }
   return false;
 }
 function loadData(){
@@ -1544,19 +1551,17 @@ function addInstitution(){
   const instObj={id,name,en:en||id,icon,iconBg:color,type,desc,url:url||''};
 
   if(isEditing && existIdx>=0){
-    // 更新現有
     INST_DATA[existIdx]=instObj;
-    const custom=JSON.parse(_ls.get('rtk-custom-insts')||'[]');
-    const ci=custom.findIndex(i=>i.id===id);
-    if(ci>=0) custom[ci]=instObj; else custom.push(instObj);
-    _ls.set('rtk-custom-insts',JSON.stringify(custom));
   } else {
-    // 新增
     INST_DATA.push(instObj);
-    const custom=JSON.parse(_ls.get('rtk-custom-insts')||'[]');
-    custom.push(instObj);
-    _ls.set('rtk-custom-insts',JSON.stringify(custom));
   }
+  // 統一存入 localStorage
+  const custom=JSON.parse(_ls.get('rtk-custom-insts')||'[]');
+  const ci=custom.findIndex(i=>i.id===id);
+  if(ci>=0) custom[ci]=instObj; else custom.push(instObj);
+  _ls.set('rtk-custom-insts',JSON.stringify(custom));
+  // 同時匯出提示
+  _ls.set('rtk-inst-dirty','1');
 
   // 重設表單
   window._editingInstId=null;
@@ -1569,7 +1574,10 @@ function addInstitution(){
   if(btn) btn.textContent='✅ 新增此機構';
 
   buildModalOptions(); renderInst(); renderInstListManage(); renderAll();
-  alert(isEditing?`✅ 機構「${name}」已更新！`:`✅ 機構「${name}」已新增！`);
+  const msg = isEditing?'機構「'+name+'」已更新！':'機構「'+name+'」已新增！';
+  if(confirm('✅ '+msg+'\n\n建議立即匯出 JSON 備份，避免重新整理後資料消失。\n\n點「確定」前往更新課程來源頁面匯出。')){
+    showPage('edit');
+  }
 }
 
 function removeInst(id){
@@ -1582,7 +1590,11 @@ function removeInst(id){
 }
 function loadCustomInsts(){
   const custom=JSON.parse(_ls.get('rtk-custom-insts')||'[]');
-  custom.forEach(inst=>{ if(!INST_DATA.find(i=>i.id===inst.id)) INST_DATA.push(inst); });
+  custom.forEach(inst=>{ 
+    const idx=INST_DATA.findIndex(i=>i.id===inst.id);
+    if(idx>=0) INST_DATA[idx]=inst; // 更新現有
+    else INST_DATA.push(inst); // 新增
+  });
 }
 
 function openDetail(idx){

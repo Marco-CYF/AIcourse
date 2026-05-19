@@ -67,4 +67,8 @@ INSTITUTIONS = [
     },
     {
         'id': '商發署', 'name': '經濟部商業發展署', 'type': 'ext',
-        'url': 'https://serv.gcis.nat.gov.tw/AOCA
+        'url': 'https://serv.gcis.nat.gov.tw/AOCAI/Course',
+        'crawl_urls': [
+            'https://serv.gcis.nat.gov.tw/AOCAI/Course',
+        ]
+    },

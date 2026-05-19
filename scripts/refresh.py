@@ -135,6 +135,7 @@ def save_courses(courses, log):
                 'total': len(courses),
                 'last_refresh': datetime.now().isoformat(),
             },
+            'institutions': [],
             'courses': courses
         }, f, ensure_ascii=False, indent=2)
     with open('data/refresh_log.json', 'w', encoding='utf-8') as f:

@@ -2,8 +2,8 @@
   "meta": {
     "version": "2.0",
     "generated": "2026-05-19",
-    "total": 132,
-    "last_refresh": "2026-05-19T01:49:05.422276"
+    "total": 137,
+    "last_refresh": "2026-05-19T02:12:10.651915"
   },
   "courses": [
     {
@@ -1589,6 +1589,66 @@
       "outline": "針對產品企劃職類設計之AI實作應用課程，學習運用AI工具強化產品規劃與創新設計能力。",
       "url": "https://serv.gcis.nat.gov.tw/AOCAI/Course",
       "inst": "MOEA"
+    },
+    {
+      "code": "PCSchool-N02",
+      "name": "用 Vibe Coding + Gemini API 打造你的第一個 AI 聊天室",
+      "cat": "02",
+      "type": "star",
+      "hours": "",
+      "fee": "",
+      "target": "",
+      "outline": "體驗Vibe Coding開發哲學，深度整合Google Gemini API，從前後端生成到雲端部署，完整打造具備上下文記憶的AI聊天室正式產品，降低技術門檻。",
+      "url": "https://business.gjunedu.com/Course/AI%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7%E9%96%8B%E7%99%BC?c=2",
+      "inst": "PCSchool"
+    },
+    {
+      "code": "AIA-N01",
+      "name": "AIPM 班（台北第二期）",
+      "cat": "04",
+      "type": "ext",
+      "hours": "",
+      "fee": "",
+      "target": "具備AI基礎知識的專案管理人員或有意轉型AI產品管理的專業人士",
+      "outline": "培養AI產品經理核心能力，涵蓋AI專案規劃、產品開發流程管理及AI應用落地實務，協助學員掌握AI產品管理方法論。",
+      "url": "https://aiacademy.tw/genai2026-courses/",
+      "inst": "AIA"
+    },
+    {
+      "code": "AIA-N02",
+      "name": "AIPM 班（台中第一期）",
+      "cat": "04",
+      "type": "ext",
+      "hours": "",
+      "fee": "",
+      "target": "具備AI基礎知識的專案管理人員或有意轉型AI產品管理的專業人士",
+      "outline": "培養AI產品經理核心能力，涵蓋AI專案規劃、產品開發流程管理及AI應用落地實務，協助學員掌握AI產品管理方法論。",
+      "url": "https://aiacademy.tw/genai2026-courses/",
+      "inst": "AIA"
+    },
+    {
+      "code": "AIA-N03",
+      "name": "智慧醫療班（台北總校）",
+      "cat": "03",
+      "type": "ext",
+      "hours": "",
+      "fee": "",
+      "target": "醫療產業從業人員、醫療資訊技術人員及有志於智慧醫療應用的專業人士",
+      "outline": "結合AI技術與醫療產業需求，涵蓋醫療影像辨識、臨床資料分析及智慧診斷等應用，協助學員掌握AI在醫療領域的實際落地技術。",
+      "url": "https://aiacademy.tw/genai2026-courses/",
+      "inst": "AIA"
+    },
+    {
+      "code": "AIA-N04",
+      "name": "智慧醫療班（台中分校）",
+      "cat": "03",
+      "type": "ext",
+      "hours": "",
+      "fee": "",
+      "target": "醫療產業從業人員、醫療資訊技術人員及有志於智慧醫療應用的專業人士",
+      "outline": "結合AI技術與醫療產業需求，涵蓋醫療影像辨識、臨床資料分析及智慧診斷等應用，協助學員掌握AI在醫療領域的實際落地技術。",
+      "url": "https://aiacademy.tw/genai2026-courses/",
+      "inst": "AIA"
     }
   ]
 }

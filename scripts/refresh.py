@@ -1,5 +1,5 @@
 import os, json, re, asyncio
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import anthropic
 
 API_KEY = os.environ.get('ANTHROPIC_API_KEY')
@@ -131,9 +131,9 @@ def save_courses(courses, log):
         json.dump({
             'meta': {
                 'version': '2.0',
-                'generated': datetime.now().strftime('%Y-%m-%d'),
+                'generated': datetime.now(timezone(timedelta(hours=8))).strftime('%Y-%m-%d'),
                 'total': len(courses),
-                'last_refresh': datetime.now().isoformat(),
+                'last_refresh': datetime.now(timezone(timedelta(hours=8))).isoformat(),
             },
             'institutions': [],
             'courses': courses
@@ -197,10 +197,10 @@ async def refresh_institution(inst, existing_courses):
 
 
 async def main():
-    print('課程刷新 ' + datetime.now().strftime('%Y-%m-%d %H:%M'))
+    print('課程刷新 ' + datetime.now(timezone(timedelta(hours=8))).strftime('%Y-%m-%d %H:%M'))
     courses = load_courses()
     print('現有：' + str(len(courses)) + ' 筆')
-    log = {'date': datetime.now().strftime('%Y-%m-%d'), 'results': {}, 'total_new': 0}
+    log = {'date': datetime.now(timezone(timedelta(hours=8))).strftime('%Y-%m-%d'), 'results': {}, 'total_new': 0}
     total_new = 0
 
     for i, inst in enumerate(INSTITUTIONS):

@@ -1,0 +1,41 @@
+name: 每季大學課程刷新
+
+on:
+  schedule:
+    # 每3個月第一天 UTC 01:00（台灣 09:00）
+    - cron: '0 1 1 3,6,9,12 *'
+  workflow_dispatch:
+
+jobs:
+  refresh-university:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install anthropic playwright
+          playwright install chromium
+          playwright install-deps chromium
+
+      - name: Run university refresh
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python scripts/refresh_university.py
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/courses.json data/university_refresh_log.json
+          git diff --cached --quiet || git commit -m "🎓 每季大學課程更新 $(date +'%Y-%m-%d')"
+          git push

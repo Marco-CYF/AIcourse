@@ -1,9 +1,9 @@
 {
   "meta": {
     "version": "2.0",
-    "generated": "2026-05-20",
-    "total": 167,
-    "last_refresh": "2026-05-20T21:05:44.666038+08:00"
+    "generated": "2026-05-21",
+    "total": 169,
+    "last_refresh": "2026-05-21T20:07:47.858422+08:00"
   },
   "institutions": [],
   "courses": [
@@ -2010,6 +2010,30 @@
       "url": "https://course.ncku.edu.tw/",
       "inst": "NCKU",
       "type": "star"
+    },
+    {
+      "code": "PCSchool-N03",
+      "name": "Python與AI人工智慧開發入門",
+      "cat": "02",
+      "type": "star",
+      "hours": "",
+      "fee": "",
+      "target": "",
+      "outline": "從Python語法與執行環境出發，涵蓋數值計算與條件分析，帶領學員掌握AI人工智慧開發的基礎知識與實作能力，適合零基礎學員入門學習。",
+      "url": "https://business.gjunedu.com/Course/AI%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7%E9%96%8B%E7%99%BC?c=2",
+      "inst": "PCSchool"
+    },
+    {
+      "code": "AIA-N01",
+      "name": "大型語言模型實作班（素養+LLM+產業應用 雲端流程自動化）",
+      "cat": "04",
+      "type": "ext",
+      "hours": "21",
+      "fee": "17000",
+      "target": "對LLM與自動化流程有興趣的一般白領上班族或剛入門的IT新手（無程式背景）",
+      "outline": "了解基礎多模態模型概念與辦公室自動化應用，掌握LLM基礎操作，建立簡單自動化應用流程，整合Make平台與ChatGPT提問技術。",
+      "url": "https://aiacademy.tw/genai2026-courses/",
+      "inst": "AIA"
     }
   ]
 }

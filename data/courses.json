@@ -1,9 +1,9 @@
 {
   "meta": {
     "version": "2.0",
-    "generated": "2026-05-21",
-    "total": 169,
-    "last_refresh": "2026-05-21T20:07:47.858422+08:00"
+    "generated": "2026-05-23",
+    "total": 170,
+    "last_refresh": "2026-05-23T11:02:15.739017+08:00"
   },
   "institutions": [],
   "courses": [
@@ -2033,6 +2033,18 @@
       "target": "對LLM與自動化流程有興趣的一般白領上班族或剛入門的IT新手（無程式背景）",
       "outline": "了解基礎多模態模型概念與辦公室自動化應用，掌握LLM基礎操作，建立簡單自動化應用流程，整合Make平台與ChatGPT提問技術。",
       "url": "https://aiacademy.tw/genai2026-courses/",
+      "inst": "AIA"
+    },
+    {
+      "code": "AIA-N01",
+      "name": "大型語言模型實作班（初階）素養 + LLM + 產業應用 雲端流程自動化",
+      "cat": "06",
+      "type": "ext",
+      "hours": "21",
+      "fee": "17000",
+      "target": "對LLM與自動化流程有興趣的一般白領上班族或剛入門的IT新手（無程式背景）",
+      "outline": "學習LLM基礎操作、ChatGPT提問技術、Make自動化流程應用，建立簡單自動化應用流程，並了解多模態模型概念與辦公室自動化應用。",
+      "url": "https://aiacademy.tw/admission-llmb-tp/",
       "inst": "AIA"
     }
   ]

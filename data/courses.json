@@ -1,9 +1,9 @@
 {
   "meta": {
     "version": "2.0",
-    "generated": "2026-05-29",
-    "total": 173,
-    "last_refresh": "2026-05-29T11:40:42.812300+08:00"
+    "generated": "2026-05-30",
+    "total": 175,
+    "last_refresh": "2026-05-30T11:06:48.514953+08:00"
   },
   "institutions": [],
   "courses": [
@@ -2080,6 +2080,30 @@
       "fee": "17000",
       "target": "對LLM與自動化流程有興趣的一般白領上班族或剛入門的IT新手（無程式背景）",
       "outline": "入門LLM基礎知識、ChatGPT提問技術、Make自動化流程應用，建立簡單自動化應用流程，無需程式基礎，適合白領上班族與IT新手。",
+      "url": "https://aiacademy.tw/genai2026-courses/",
+      "inst": "AIA"
+    },
+    {
+      "code": "AIA-N02",
+      "name": "產業AI專班",
+      "cat": "06",
+      "type": "ext",
+      "hours": "",
+      "fee": "",
+      "target": "",
+      "outline": "針對產業應用的AI專班，設有台北總校、台中分校及南部分校，協助各產業導入AI技術與應用。",
+      "url": "https://aiacademy.tw/genai2026-courses/",
+      "inst": "AIA"
+    },
+    {
+      "code": "AIA-N03",
+      "name": "AIPM班（台北第二期／台中第一期）",
+      "cat": "07",
+      "type": "ext",
+      "hours": "",
+      "fee": "",
+      "target": "",
+      "outline": "AI專案管理課程，培養學員具備AI專案規劃、推動與管理能力，設有台北及台中兩期班次。",
       "url": "https://aiacademy.tw/genai2026-courses/",
       "inst": "AIA"
     }

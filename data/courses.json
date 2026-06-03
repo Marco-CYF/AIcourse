@@ -1,9 +1,9 @@
 {
   "meta": {
     "version": "2.0",
-    "generated": "2026-06-02",
-    "total": 175,
-    "last_refresh": "2026-06-02T12:03:21.790930+08:00"
+    "generated": "2026-06-03",
+    "total": 177,
+    "last_refresh": "2026-06-03T12:09:38.833676+08:00"
   },
   "institutions": [],
   "courses": [
@@ -2106,6 +2106,30 @@
       "outline": "AI專案管理課程，培養學員具備AI專案規劃、推動與管理能力，設有台北及台中兩期班次。",
       "url": "https://aiacademy.tw/genai2026-courses/",
       "inst": "AIA"
+    },
+    {
+      "code": "AIA-N02",
+      "name": "AIPM班",
+      "cat": "08",
+      "type": "ext",
+      "hours": "",
+      "fee": "",
+      "target": "",
+      "outline": "台灣人工智慧學校開設之AIPM班，涵蓋台北第二期與台中第一期，培養具AI專案管理能力的專業人才。",
+      "url": "https://aiacademy.tw/admission-llmb-tp/",
+      "inst": "AIA"
+    },
+    {
+      "code": "MOEA-N01",
+      "name": "Edge AI 語音指令辦識應用",
+      "cat": "04",
+      "type": "ext",
+      "hours": "14",
+      "fee": "",
+      "target": "",
+      "outline": "課程介紹ASR語音指令辨識技術，涵蓋自動語音辨識基礎、語音辨識發展原理、語音指令開發套件應用及實習演練，協助學員熟悉語音辨識開發能力。",
+      "url": "https://www.dtts.org.tw/subsidy/Course/Courselist.aspx",
+      "inst": "MOEA"
     }
   ]
 }

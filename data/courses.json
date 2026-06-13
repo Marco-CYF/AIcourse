@@ -1,9 +1,9 @@
 {
   "meta": {
     "version": "2.0",
-    "generated": "2026-06-12",
-    "total": 181,
-    "last_refresh": "2026-06-12T12:01:59.665200+08:00"
+    "generated": "2026-06-13",
+    "total": 183,
+    "last_refresh": "2026-06-13T11:47:17.670974+08:00"
   },
   "institutions": [],
   "courses": [
@@ -2177,6 +2177,30 @@
       "target": "",
       "outline": "南部分校開設之產業AI專班，結合南部產業特性提供AI技術導入與應用實務訓練。",
       "url": "https://aiacademy.tw/",
+      "inst": "AIA"
+    },
+    {
+      "code": "AIA-N01",
+      "name": "大型語言模型實作初階班（素養+LLM+產業應用 雲端流程自動化）",
+      "cat": "06",
+      "type": "ext",
+      "hours": "21小時（3天）",
+      "fee": "17,000元",
+      "target": "對LLM與自動化流程有興趣的一般白領上班族或剛入門的IT新手（無程式背景）",
+      "outline": "學習LLM基礎操作、ChatGPT提問技術、Make自動化流程應用，建立簡單自動化應用流程，涵蓋多模態模型概念與辦公室自動化應用。",
+      "url": "https://aiacademy.tw/admission-llmb-tp/",
+      "inst": "AIA"
+    },
+    {
+      "code": "AIA-N02",
+      "name": "AIPM 班（經理人 AI 專案管理）",
+      "cat": "08",
+      "type": "ext",
+      "hours": "",
+      "fee": "",
+      "target": "",
+      "outline": "針對具備AI基礎的管理者，培養AI專案規劃、執行與管理能力，協助企業推動AI導入與數位轉型專案管理實務。",
+      "url": "https://aiacademy.tw/genai2026-courses/",
       "inst": "AIA"
     }
   ]

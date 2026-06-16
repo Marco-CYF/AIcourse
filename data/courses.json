@@ -1,9 +1,9 @@
 {
   "meta": {
     "version": "2.0",
-    "generated": "2026-06-15",
-    "total": 183,
-    "last_refresh": "2026-06-15T12:20:37.621291+08:00"
+    "generated": "2026-06-16",
+    "total": 184,
+    "last_refresh": "2026-06-16T12:10:09.738619+08:00"
   },
   "institutions": [],
   "courses": [
@@ -2200,6 +2200,18 @@
       "fee": "",
       "target": "",
       "outline": "針對具備AI基礎的管理者，培養AI專案規劃、執行與管理能力，協助企業推動AI導入與數位轉型專案管理實務。",
+      "url": "https://aiacademy.tw/genai2026-courses/",
+      "inst": "AIA"
+    },
+    {
+      "code": "AIA-N02",
+      "name": "AIPM 班（產業AI專班）",
+      "cat": "08",
+      "type": "ext",
+      "hours": "",
+      "fee": "",
+      "target": "",
+      "outline": "針對產業AI應用與專案管理需求開設，涵蓋台北總校、台中分校與南部分校，培養具備AI產業落地與專案推動能力的人才。",
       "url": "https://aiacademy.tw/genai2026-courses/",
       "inst": "AIA"
     }

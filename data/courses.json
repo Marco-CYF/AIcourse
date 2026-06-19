@@ -1,9 +1,9 @@
 {
   "meta": {
     "version": "2.0",
-    "generated": "2026-06-18",
-    "total": 187,
-    "last_refresh": "2026-06-18T12:02:08.721678+08:00"
+    "generated": "2026-06-19",
+    "total": 188,
+    "last_refresh": "2026-06-19T12:22:13.502886+08:00"
   },
   "institutions": [],
   "courses": [
@@ -2249,6 +2249,18 @@
       "target": "醫療產業從業人員、醫療資訊工程師及對智慧醫療有興趣的專業人士",
       "outline": "結合AI與醫療領域專業，探討智慧醫療應用場景，包含醫療影像分析、臨床決策支援等實務技術與案例。",
       "url": "https://aiacademy.tw/",
+      "inst": "AIA"
+    },
+    {
+      "code": "AIA-N01",
+      "name": "大型語言模型實作班（LLM 初階，素養+LLM+產業應用，雲端流程自動化）",
+      "cat": "02",
+      "type": "ext",
+      "hours": "21",
+      "fee": "17000",
+      "target": "對LLM與自動化流程有興趣的一般白領上班族或剛入門的IT新手（無程式背景）",
+      "outline": "入門LLM基礎知識與ChatGPT提問技術，搭配Make自動化流程應用，建立簡單自動化工作流程，無需程式基礎，適合新手快速上手生成式AI工具。",
+      "url": "https://aiacademy.tw/admission-llmb-tp/",
       "inst": "AIA"
     }
   ]

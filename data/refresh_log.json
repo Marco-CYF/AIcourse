@@ -1,15 +1,15 @@
 {
-  "date": "2026-06-26",
+  "date": "2026-06-27",
   "results": {
-    "TCFST": "找到 0 門新課程",
-    "TAICA": "找到 0 門新課程",
-    "UUU": "找到 0 門新課程",
-    "PCSchool": "找到 0 門新課程",
-    "TibaMe": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcRBDdhfehD721gotntkE'}",
-    "III": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcRBK1EMcNXcyVG9vdx4A'}",
-    "WDA": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcRBPzuA3R1TVa8WMcs16'}",
-    "AIA": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcRBVTLX66HiueDwF7nQS'}",
-    "MOEA": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcRBbouwmX7cLpdWXdnH2'}"
+    "TCFST": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcT1nK5kaiP9u7xx8xzNJ'}",
+    "TAICA": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcT1sF53BXPQgBZExRLnX'}",
+    "UUU": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcT1x9v7qY6xSzNTTpdjJ'}",
+    "PCSchool": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcT23DsdeQoAQb7VNw2zp'}",
+    "TibaMe": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcT28aMKrq3UN8nyTYMrH'}",
+    "III": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcT2Dz8CcFKCEYJyFtoPs'}",
+    "WDA": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcT2K4iumR6XTrRSv9Wxc'}",
+    "AIA": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcT2QabQJx8MhEi64XcsG'}",
+    "MOEA": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CcT2XBASmC4CHvdKU6Xt3'}"
   },
   "total_new": 0
 }

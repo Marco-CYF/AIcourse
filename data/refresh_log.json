@@ -1,15 +1,15 @@
 {
-  "date": "2026-07-23",
+  "date": "2026-07-24",
   "results": {
-    "TCFST": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CdJDAAZs9CVNYUnp4xbUZ'}",
-    "TAICA": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CdJDF3uA7zjFfGSZ159dV'}",
-    "UUU": "所有頁面爬取失敗",
-    "PCSchool": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CdJDTPwFWM6QyYAJvYe78'}",
-    "TibaMe": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CdJDYmbdagRasVaKMGJMx'}",
-    "III": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CdJDeCj7zsmS9DUiQMkQ9'}",
-    "WDA": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CdJDjLbHE7Eg1orFHcZUc'}",
-    "AIA": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CdJDpt9EPXyGPwZwS5i3v'}",
-    "MOEA": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CdJDwZaTy4ySvkiWPDnVH'}"
+    "TCFST": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CdL6mhfJMaD46KoujwsXP'}",
+    "TAICA": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CdL6rb35m9n5pXK8bomSE'}",
+    "UUU": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CdL6wWAH8hb7ZoARjEemo'}",
+    "PCSchool": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CdL72ZQPFt7vVZftHPFC9'}",
+    "TibaMe": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CdL77kRo8JMiFnkuv1bix'}",
+    "III": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CdL7D8BP6R795kMP9mm8P'}",
+    "WDA": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CdL7JARi2Fo3aSSDdhSvK'}",
+    "AIA": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CdL7Pevc1F16Dq5JGwu7k'}",
+    "MOEA": "API 錯誤：Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CdL7W5vRpGHpcV8hrf92D'}"
   },
   "total_new": 0
 }
